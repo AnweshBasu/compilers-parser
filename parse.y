@@ -196,7 +196,7 @@ TOKEN makeop(int op){
 TOKEN copytok(TOKEN target) {
   TOKEN copy = talloc();
   copy->tokentype = target->tokentype;
-  copy->datatype = target->datatype;
+  copy->basicdt = target->basicdt;
   copy->symtype = target->symtype;
   copy->symentry = target->symentry;
   copy->link = target->link;
@@ -232,7 +232,7 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
 TOKEN makenum(int number) {
   TOKEN tok = talloc();
   tok->tokentype = NUMBERTOK;
-  tok->datatype = INTEGER;
+  tok->basicdt = INTEGER;
   tok->intval = number;
   if (DEBUG & DB_MAKENUM) {
       printf("makenum\n");
@@ -365,11 +365,11 @@ TOKEN findid(TOKEN tok) { /* the ID token */
     SYMBOL sym, typ;
     sym = searchst(tok->stringval);
     tok->symentry = sym;
-    typ = sym->datatype;
+    typ = sym->basicdt;
     tok->symtype = typ;
     if ( typ->kind == BASICTYPE ||
          typ->kind == POINTERSYM)
-        tok->datatype = typ->basicdt;
+        tok->basicdt = typ->basicdt;
     return tok;
   }
 
@@ -396,7 +396,7 @@ void instvars(TOKEN idlist, TOKEN typetok)
           sym->size = typesym->size;
           blockoffs[blocknumber] =
                          sym->offset + sym->size;
-          sym->datatype = typesym;
+          sym->basicdt = typesym;
           sym->basicdt = typesym->basicdt;
           idlist = idlist->link;
         };
