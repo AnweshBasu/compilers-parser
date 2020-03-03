@@ -405,11 +405,10 @@ void instvars(TOKEN idlist, TOKEN typetok)
 int wordaddress(int n, int wordsize)
   { return ((n + wordsize - 1) / wordsize) * wordsize; }
  
-yyerror(char const * s)
-  {
-     
-     fprintf (stderr, "%s\n", s);
-  }
+void yyerror (char const *s)
+{
+  fprintf (stderr, "%s\n", s);
+}
 
 main()
   { int res;
