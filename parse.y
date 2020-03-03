@@ -268,10 +268,6 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN assign, TOKEN tokb, TOKEN expr, TOKEN t
     leoper->link = body;
     ifs->operands = leoper;
     label->link = ifs;
-    if (DEBUG && DB_MAKEFOR) {
-         printf("makefor\n");
-         dbugprinttok(tok);
-    }
     return tok;
 }
 
@@ -283,10 +279,6 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) {
   tok->whichval = FUNCALLOP;
   tok->operands = fn;
   fn->link=args;
-  if (DEBUG && DB_MAKEFUNCALL) {
-         printf("makefuncall\n");
-         dbugprinttok(tok);
-  }
   return tok;
 }
 
@@ -294,11 +286,6 @@ TOKEN makeprogn(TOKEN tok, TOKEN statements)
   {  tok->tokentype = OPERATOR;
      tok->whichval = PROGNOP;
      tok->operands = statements;
-     if (DEBUG & DB_MAKEPROGN)
-       { printf("makeprogn\n");
-         dbugprinttok(tok);
-         dbugprinttok(statements);
-       };
      return tok;
    }
 
@@ -312,11 +299,6 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
     nameToArgs = makeprogn(nameToArgs, args);
     name->link = nameToArgs;
     nameToArgs->link = statements;
-    if (DEBUG & DB_MAKEPROGRAM) { 
-      printf("makeprogram\n");
-      dbugprinttok(tok);
-      dbugprinttok(nameToArgs);
-    };
     return tok;
   }
 
