@@ -158,11 +158,6 @@ program    : PROGRAM IDENTIFIER LPAREN idlist RPAREN SEMICOLON vblock DOT { pars
 
 TOKEN cons(TOKEN item, TOKEN list)           /* add item to front of list */
   { item->link = list;
-    if (DEBUG & DB_CONS)
-       { printf("cons\n");
-         dbugprinttok(item);
-         dbugprinttok(list);
-       };
     return item;
   }
 
@@ -170,12 +165,6 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs)        /* reduce binary operator */
   { op->operands = lhs;          /* link operands to operator       */
     lhs->link = rhs;             /* link second operand to first    */
     rhs->link = NULL;            /* terminate operand list          */
-    if (DEBUG & DB_BINOP)
-       { printf("binop\n");
-         dbugprinttok(op);
-         dbugprinttok(lhs);
-         dbugprinttok(rhs);
-       };
     return op;
   }
 
@@ -185,10 +174,6 @@ TOKEN makeop(int op){
     TOKEN tok = talloc();
     tok->tokentype = OPERATOR;
     tok->whichval = op;
-    if (DEBUG & DB_MAKEOP) {
-      printf("makeop\n");
-      dbugprinttok(tok);
-    }
     return tok;
 }
 
@@ -203,10 +188,6 @@ TOKEN copytok(TOKEN target) {
   copy->whichval = target->whichval;
   copy->intval = target->intval;
   copy->realval = target->realval;
-  if (DEBUG & DB_MAKECOPY) {
-    printf("copytok\n");
-    dbugprinttok(copy);
-  }
   return copy;
 }
 
@@ -218,13 +199,6 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
      thenpart->link = elsepart;
      exp->link = thenpart;
      tok->operands = exp;
-     if (DEBUG & DB_MAKEIF)
-        { printf("makeif\n");
-          dbugprinttok(tok);
-          dbugprinttok(exp);
-          dbugprinttok(thenpart);
-          dbugprinttok(elsepart);
-        };
      return tok;
    }
 
@@ -234,10 +208,6 @@ TOKEN makenum(int number) {
   tok->tokentype = NUMBERTOK;
   tok->basicdt = INTEGER;
   tok->intval = number;
-  if (DEBUG & DB_MAKENUM) {
-      printf("makenum\n");
-      dbugprinttok(tok);
-  }
   return tok;
 }
 
@@ -247,10 +217,6 @@ TOKEN makelabel() {
   tok->tokentype = OPERATOR;
   tok->whichval = LABELOP;
   tok->operands = makenum(labelnumber++);
-  if (DEBUG & DB_MAKELABEL) {
-      printf("makelabel\n");
-      dbugprinttok(tok);
-  }
   return tok;
 }
 
@@ -261,10 +227,6 @@ TOKEN makegoto(int num){
   tok->tokentype = OPERATOR;
   tok->whichval = GOTOOP;
   tok->operands = makenum(num);
-  if (DEBUG && DB_MAKEGOTO) {
-      printf("makegoto\n");
-      dbugprinttok(tok);
-  }
   return tok;
 }
 
@@ -416,6 +378,5 @@ main()
     res = yyparse();
     printst();
     printf("yyparse result = %8d\n", res);
-    if (DEBUG & DB_PARSERES) dbugprinttok(parseresult);
     ppexpr(parseresult);           /* Pretty-print the result tree */
   }
