@@ -354,7 +354,7 @@ void yyerror (char const *s)
   fprintf (stderr, "%s\n", s);
 }
 
-main()
+int main()
   { int res;
     initsyms();
     res = yyparse();
