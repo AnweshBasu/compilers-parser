@@ -406,9 +406,9 @@ int wordaddress(int n, int wordsize)
   { return ((n + wordsize - 1) / wordsize) * wordsize; }
  
 yyerror(s)
-  char * s;
-  { 
-  fputs(s,stderr); putc('\n',stderr);
+  {
+     char * s;
+     fputs(s,stderr); putc('\n',stderr);
   }
 
 main()
