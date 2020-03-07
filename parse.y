@@ -1,9 +1,10 @@
-%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 30 Jul 13   */
+%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 25 Jul 19   */
 
-/* Copyright (c) 2013 Gordon S. Novak Jr. and
+/* Copyright (c) 2019 Gordon S. Novak Jr. and
    The University of Texas at Austin. */
 
 /* 14 Feb 01; 01 Oct 04; 02 Mar 07; 27 Feb 08; 24 Jul 09; 02 Aug 12 */
+/* 30 Jul 13 */
 
 /*
 ; This program is free software; you can redistribute it and/or modify
@@ -78,84 +79,33 @@ TOKEN parseresult;
 
 %%
 
-program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
+program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
              ;
   statement  :  BEGINBEGIN statement endpart
                                        { $$ = makeprogn($1,cons($2, $3)); }
-             |  IF expression THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
-             | FOR assignment TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
-             | funcall {$$ = $1;}
-             |  assignment {$$ = $1;}
+             |  IF expr THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
+             |  assignment
              ;
-  funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
-             ;
-
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
-             |  SEMICOLON END
-
-             | END          {$$ = NULL;}
+             |  END                            { $$ = NULL; }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
              ;
-  assignment :  IDENTIFIER ASSIGN expression         { $$ = binop($2, $1, $3); }
+  assignment :  variable ASSIGN expr           { $$ = binop($2, $1, $3); }
              ;
-
-  simple_expression : term 
-             | simple_expression PLUS term {$$ = binop($2, $1, $3); }
-             | sign term    {$$ = cons($1, $2);}
+  expr       :  expr PLUS term                 { $$ = binop($2, $1, $3); }
+             |  term 
              ;
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
              ;
-  id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
-             | IDENTIFIER  {$$ = cons($1, NULL);}
-             ;
-  expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
-             | expression  {$$ = cons($1, NULL);}
-             ;
-  expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
-             | simple_expression  {$$ = $1;}
-             ;
-  sign      : PLUS 
-            | MINUS
-            ;
-  compare_op : EQ 
-             | LT 
-             | GT 
-             | NE 
-             | LE 
-             | GE 
-             | IN
-             ;
-  factor     :  LPAREN expression RPAREN             { $$ = $2; }
-             |  IDENTIFIER
+  factor     :  LPAREN expr RPAREN             { $$ = $2; }
+             |  variable
              |  NUMBER
-             | unsigned_constant
              ;
-  unsigned_constant : IDENTIFIER 
-             | NUMBER 
-             | NIL 
-             | STRING
+  variable   : IDENTIFIER
              ;
-  variable : IDENTIFIER
-             ;
-  vblock     : VAR vdef_list block  {$$ = $3;}
-             | block
-             ;
-  vdef_list : vdef SEMICOLON  vdef_list  {$$ = cons($2, $1);}
-            |  vdef SEMICOLON    {$$ = $1;}
-            ;
- vdef       : id_list COLON type {instvars($1, $3);}
-              ;
-
- type      : simple_type  {$$ = $1;}
-            ;
-  simple_type : IDENTIFIER
-            ;
-  block : BEGINBEGIN statement endpart  {$$ = cons($2, $3);}
-        ;
-
 %%
 
 /* You should add your own debugging flags below, and add debugging
@@ -177,63 +127,6 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { p
    /*  Note: you should add to the above values and insert debugging
        printouts in your routines similar to those that are shown here.     */
 
-
-
-TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
-              TOKEN tokc, TOKEN statement) {
-                TOKEN labelZero = makelabel();
-                asg -> link = labelZero;
-                TOKEN lessThan  = makeop(LEOP);
-                TOKEN identifier = talloc();
-                identifier -> tokentype = IDENTIFIERTOK;
-                strcpy(identifier -> stringval, asg ->operands -> stringval);
-                TOKEN ifStatement = binop(lessThan, identifier, endexpr);
-                labelZero -> link = makeif(tok, ifStatement, statement, NULL);
-                TOKEN variableIncrement = talloc();
-                variableIncrement -> tokentype = IDENTIFIERTOK;
-                strcpy(variableIncrement -> stringval, identifier -> stringval);
-
-                TOKEN increment =  makeplus(variableIncrement, makeintc(1), talloc());
-                TOKEN variableAssign = talloc();
-                variableAssign -> tokentype = IDENTIFIERTOK;
-                strcpy(variableAssign -> stringval, identifier -> stringval);
-                increment -> operands =  variableIncrement;
-                 variableAssign -> link = increment;
-                TOKEN sepAsign = makeop(ASSIGNOP);
-                sepAsign -> operands = variableAssign;
-                TOKEN stateOps = statement -> operands;
-                stateOps -> link = sepAsign;
-                sepAsign -> link = makegoto(labelZero -> operands -> intval);
-		    return makeprogn(tokb, asg);
-    }
-
-  TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
-    TOKEN increment = makeop(PLUSOP);
-    increment -> operands = lhs;
-    lhs -> link = rhs;
-    return increment;
-  }
-
-
-TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args){
-  TOKEN tokFunc = makeop(FUNCALLOP);
-  tokFunc -> operands = fn;
-  tokFunc -> operands -> link = args;
-  return makeprogn(tok, tokFunc);
-}
-void  instvars(TOKEN idlist, TOKEN typetok){
-  int token_alignment = alignsize(searchst(typetok -> stringval));
-  for (;idlist != NULL; idlist = idlist -> link) {
-      SYMBOL symVal = insertsym(idlist -> stringval);
-      symVal -> basicdt = idlist -> basicdt;
-      symVal -> kind = VARSYM;
-      symVal -> size = searchst(typetok -> stringval) -> size;
-      symVal -> datatype = searchst(typetok -> stringval);
-      symVal -> offset = wordaddress(blockoffs[blocknumber], token_alignment);
-      int replace = symVal -> size + symVal -> offset;     
-      blockoffs[blocknumber] = replace;
-  }
-}
 TOKEN cons(TOKEN item, TOKEN list)           /* add item to front of list */
   { item->link = list;
     if (DEBUG & DB_CONS)
@@ -257,19 +150,13 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs)        /* reduce binary operator */
     return op;
   }
 
-TOKEN makeintc(int num) {
-  TOKEN number = talloc();
-  number -> tokentype = NUMBERTOK;
-  number -> intval = num;
-  number -> basicdt = INTEGER;
-  return number;
-}
-
-TOKEN makelabel() {
-  TOKEN ret = makeop(LABELOP);
-  ret -> operands = makeintc(labelnumber);
-  labelnumber++;
-  return ret;
+/* makeop makes a new operator token with operator number opnum.
+   Example:  makeop(FLOATOP)  */
+TOKEN makeop(int opnum) {
+  TOKEN operatorTok = talloc();
+  operatorTok -> tokentype = OPERATOR;
+  operatorTok -> whichval = opnum;
+  return operatorTok;  
 }
 
 TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
@@ -289,57 +176,102 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
      return tok;
    }
 
-TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
-  {
-    TOKEN nameProg = talloc();
-    TOKEN statementProg = talloc();
-    TOKEN prog  = makeop(PROGRAMOP);
-    prog -> operands = name;
-    makeprogn(nameProg, args);
-    makeprogn(statementProg, statements);
-    name -> link = nameProg;
-    nameProg -> link = statementProg;
-    return prog;
-  }
-
-TOKEN makeprogn(TOKEN tok, TOKEN statements)
-  {  
-     tok->tokentype = OPERATOR;
-     tok->whichval = PROGNOP;
-     tok->operands = statements;
-     return tok;
-   }
-
-TOKEN makeop(int opnum) {
-  TOKEN op = talloc();
-  if (op != 0) {
-    op -> tokentype = OPERATOR;
-    op -> whichval = opnum;
-    return op;
-  }
+/* makeintc makes a new integer number token with num as its value */
+TOKEN makeintc(int num) { 
+  TOKEN intc = talloc();
+  intcTok-> tokentype = NUMBERTOK;
+  intcTok -> intval = num;
+  intcTok -> basicdt = INTEGER;
+  return intcTok;
 }
 
+/* makelabel makes a new label, using labelnumber++ */
+TOKEN makelabel() {
+  TOKEN label = makeop(LABELOP);
+  labelTok -> operands = makenum(labelnumber);
+  labelnumber++;
+  return labelTok;
+}
+
+/* makegoto makes a GOTO operator to go to the specified label.
+   The label number is put into a number token. */
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
   gotoTok -> whichval = GOTOOP;
-  gotoTok -> operands = makeintc(label);
+  intcTok = makeintc(label);
+  gotoTok -> operands = intcTok;
   gotoTok -> tokentype = OPERATOR;
   return gotoTok;
 }
+
+/* makefuncall makes a FUNCALL operator and links it to the fn and args.
+   tok is a (now) unused token that is recycled. */
+TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) 
+{
+  TOKEN funcallTok = makeop(FUNCALLOP);
+  funcallTok -> operands = fn;
+  fn -> link = args;
+  return funcallTok; /*makeprogn(tok, funcallTok);*/
+}
+
+/* makefor makes structures for a for statement.
+   sign is 1 for normal loop, -1 for downto.
+   asg is an assignment statement, e.g. (:= i 1)
+   endexpr is the end expression
+   tok, tokb and tokc are (now) unused tokens that are recycled. */
+TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
+              TOKEN tokc, TOKEN statement) 
+{
+  /* need to do */
+}
+
+
+
+TOKEN makeprogn(TOKEN tok, TOKEN statements)
+{  tok->tokentype = OPERATOR;
+   tok->whichval = PROGNOP;
+   tok->operands = statements;
+   if (DEBUG & DB_MAKEPROGN)
+     { printf("makeprogn\n");
+       dbugprinttok(tok);
+       dbugprinttok(statements);
+     };
+   return tok;
+ }
+
+/* makeprogram makes the tree structures for the top-level program */
+TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
+{
+  TOKEN prognameTok = talloc();
+  TOKEN progTok  = makeop(PROGRAMOP);
+  prog -> operands = name;
+  progName = makeprogn(progstatementTok, statements);
+  name -> link = makeprogn(prognameTok, args);
+  progName -> link = statements;
+  return progTok;  
+}
+
 int wordaddress(int n, int wordsize)
   { return ((n + wordsize - 1) / wordsize) * wordsize; }
  
+/* instvars will install variables in symbol table.
+   typetok is a token containing symbol table pointer for type. */
+void  instvars(TOKEN idlist, TOKEN typetok)
+{
+  /* need to do */
+}
+
+
 void yyerror (char const *s)
 {
   fprintf (stderr, "%s\n", s);
 }
 
-
 int main(void)          /*  */
   { int res;
     initsyms();
     res = yyparse();
-    printstlevel(1);       /* to shorten, change to:  printstlevel(1);  */
+    printst();       /* to shorten, change to:  printstlevel(1);  */
     printf("yyparse result = %8d\n", res);
     if (DEBUG & DB_PARSERES) dbugprinttok(parseresult);
     ppexpr(parseresult);           /* Pretty-print the result tree */
