@@ -304,7 +304,6 @@ int wordaddress(int n, int wordsize)
    typetok is a token containing symbol table pointer for type. */
 void  instvars(TOKEN idlist, TOKEN typetok)
 {
- int token_alignment = alignsize(searchst(typetok -> stringval));
   while (idlist != NULL) {
       SYMBOL symVal = insertsym(idlist -> stringval);
       symVal -> basicdt = idlist -> basicdt;
@@ -312,9 +311,8 @@ void  instvars(TOKEN idlist, TOKEN typetok)
       symVal -> kind = VARSYM;
       symVal -> size = searchst(typetok -> stringval) -> size;
       symVal -> datatype = searchst(typetok -> stringval);
-      symVal -> offset = wordaddress(blockoffs[blocknumber], token_alignment);
-      int replace = symVal -> size + symVal -> offset;     
-      blockoffs[blocknumber] = replace;
+      symVal -> offset = wordaddress(blockoffs[blocknumber], alignsize(searchst(typetok -> stringval)));
+      blockoffs[blocknumber] = symVal -> size + symVal -> offset;
       
   }
 }
