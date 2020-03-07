@@ -273,7 +273,12 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
 		    return makeprogn(tokb, asg);
 }
 
-
+TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
+    TOKEN increment = makeop(PLUSOP);
+    increment -> operands = lhs;
+    lhs -> link = rhs;
+    return increment;
+}
 
 TOKEN makeprogn(TOKEN tok, TOKEN statements)
 {  tok->tokentype = OPERATOR;
