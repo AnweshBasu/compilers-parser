@@ -305,15 +305,17 @@ int wordaddress(int n, int wordsize)
 void  instvars(TOKEN idlist, TOKEN typetok)
 {
  int token_alignment = alignsize(searchst(typetok -> stringval));
-  for (;idlist != NULL; idlist = idlist -> link) {
+  while (idlist != NULL) {
       SYMBOL symVal = insertsym(idlist -> stringval);
       symVal -> basicdt = idlist -> basicdt;
+      idlist = idlist -> link
       symVal -> kind = VARSYM;
       symVal -> size = searchst(typetok -> stringval) -> size;
       symVal -> datatype = searchst(typetok -> stringval);
       symVal -> offset = wordaddress(blockoffs[blocknumber], token_alignment);
       int replace = symVal -> size + symVal -> offset;     
       blockoffs[blocknumber] = replace;
+      
   }
 }
 
