@@ -122,22 +122,20 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
-  vblock     : VAR vdef_list block  {$$ = $3;}
+  vblock     : VAR v_list block  {$$ = $3;}
              | block
              ;
-  vdef_list : vdef SEMICOLON  vdef_list  {$$ = cons($2, $1);}
-            |  vdef SEMICOLON    {$$ = $1;}
-            ;
- vdef       : id_list COLON type {instvars($1, $3);}
-              ;
-
- type      : simple_type  {$$ = $1;}
-            ;
-  simple_type : IDENTIFIER
-            ;
-  block : BEGINBEGIN statement endpart  {$$ = cons($2, $3);}
-        ;
-
+  v_list     : v_grp_def SEMICOLON  v_list  {$$ = cons($2, $1);}
+             |  v_grp_def SEMICOLON    {$$ = $1;}
+             ;
+  v_grp_def       : id_list COLON type {instvars($1, $3);}
+             ;           
+  type       : simp_type  {$$ = $1;}            
+             ;
+  simp_type  : IDENTIFIER
+             ;
+  block      :  BEGINBEGIN statement endpart  {$$ =  makeprogn($1,cons($2, $3));}
+             ;             
 %%
 
 /* You should add your own debugging flags below, and add debugging
