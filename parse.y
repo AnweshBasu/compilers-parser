@@ -154,11 +154,6 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
 
 TOKEN cons(TOKEN item, TOKEN list)           /* add item to front of list */
   { item->link = list;
-    if (DEBUG & DB_CONS)
-       { printf("cons\n");
-         dbugprinttok(item);
-         dbugprinttok(list);
-       };
     return item;
   }
 
@@ -166,12 +161,6 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs)        /* reduce binary operator */
   { op->operands = lhs;          /* link operands to operator       */
     lhs->link = rhs;             /* link second operand to first    */
     rhs->link = NULL;            /* terminate operand list          */
-    if (DEBUG & DB_BINOP)
-       { printf("binop\n");
-         dbugprinttok(op);
-         dbugprinttok(lhs);
-         dbugprinttok(rhs);
-       };
     return op;
   }
 
@@ -191,13 +180,6 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
      thenpart->link = elsepart;
      exp->link = thenpart;
      tok->operands = exp;
-     if (DEBUG & DB_MAKEIF)
-        { printf("makeif\n");
-          dbugprinttok(tok);
-          dbugprinttok(exp);
-          dbugprinttok(thenpart);
-          dbugprinttok(elsepart);
-        };
      return tok;
    }
 /* makeintc makes a new integer number token with num as its value */
@@ -215,11 +197,6 @@ TOKEN makeprogn(TOKEN tok, TOKEN statements)
 {  tok->tokentype = OPERATOR;
    tok->whichval = PROGNOP;
    tok->operands = statements;
-   if (DEBUG & DB_MAKEPROGN)
-     { printf("makeprogn\n");
-       dbugprinttok(tok);
-       dbugprinttok(statements);
-     };
    return tok;
  }
  
