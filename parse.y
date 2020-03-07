@@ -94,19 +94,12 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
              | expression  {$$ = cons($1, NULL);}     
              ;
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
-             |  SEMICOLON END
-
-             | END          {$$ = NULL;}
+             |  END                            { $$ = NULL; }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
              ;
-  assignment :  IDENTIFIER ASSIGN expression         { $$ = binop($2, $1, $3); }
-             ;
-
-  simple_expression : term 
-             | simple_expression PLUS term {$$ = binop($2, $1, $3); }
-             | sign term    {$$ = cons($1, $2);}
+  assignment :  variable ASSIGN expression           { $$ = binop($2, $1, $3); }
              ;
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
