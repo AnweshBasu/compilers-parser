@@ -101,37 +101,21 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
              ;
   assignment :  variable ASSIGN expression           { $$ = binop($2, $1, $3); }
              ;
+  expression : expression PLUS term                 { $$ = binop($2, $1, $3); }
+             |  term 
+             ;	     
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
              ;
+  factor     :  LPAREN expression RPAREN             { $$ = $2; }
+             |  IDENTIFIER      
+             |  variable
+             |  NUMBER
+             ;
+  variable   : IDENTIFIER
+             ;
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
-             ;
-  expression : expression PLUS term                 { $$ = binop($2, $1, $3); }
-             |  term 
-             ;
-  sign      : PLUS 
-            | MINUS
-            ;
-  compare_op : EQ 
-             | LT 
-             | GT 
-             | NE 
-             | LE 
-             | GE 
-             | IN
-             ;
-  factor     :  LPAREN expression RPAREN             { $$ = $2; }
-             |  IDENTIFIER
-             |  NUMBER
-             | unsigned_constant
-             ;
-  unsigned_constant : IDENTIFIER 
-             | NUMBER 
-             | NIL 
-             | STRING
-             ;
-  variable : IDENTIFIER
              ;
   vblock     : VAR vdef_list block  {$$ = $3;}
              | block
