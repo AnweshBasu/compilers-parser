@@ -247,7 +247,30 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args)
 TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
               TOKEN tokc, TOKEN statement) 
 {
-  /* need to do */
+    TOKEN labelZero = makelabel();
+                asg -> link = labelZero;
+                TOKEN lessThan  = makeop(LEOP);
+                TOKEN identifier = talloc();
+                identifier -> tokentype = IDENTIFIERTOK;
+                strcpy(identifier -> stringval, asg ->operands -> stringval);
+                TOKEN ifStatement = binop(lessThan, identifier, endexpr);
+                labelZero -> link = makeif(tok, ifStatement, statement, NULL);
+                TOKEN variableIncrement = talloc();
+                variableIncrement -> tokentype = IDENTIFIERTOK;
+                strcpy(variableIncrement -> stringval, identifier -> stringval);
+
+                TOKEN increment =  makeplus(variableIncrement, makeintc(1), talloc());
+                TOKEN variableAssign = talloc();
+                variableAssign -> tokentype = IDENTIFIERTOK;
+                strcpy(variableAssign -> stringval, identifier -> stringval);
+                increment -> operands =  variableIncrement;
+                 variableAssign -> link = increment;
+                TOKEN sepAsign = makeop(ASSIGNOP);
+                sepAsign -> operands = variableAssign;
+                TOKEN stateOps = statement -> operands;
+                stateOps -> link = sepAsign;
+                sepAsign -> link = makegoto(labelZero -> operands -> intval);
+		    return makeprogn(tokb, asg);
 }
 
 
@@ -283,7 +306,17 @@ int wordaddress(int n, int wordsize)
    typetok is a token containing symbol table pointer for type. */
 void  instvars(TOKEN idlist, TOKEN typetok)
 {
-  /* need to do */
+  int token_alignment = alignsize(searchst(typetok -> stringval));
+  for (;idlist != NULL; idlist = idlist -> link) {
+      SYMBOL symVal = insertsym(idlist -> stringval);
+      symVal -> basicdt = idlist -> basicdt;
+      symVal -> kind = VARSYM;
+      symVal -> size = searchst(typetok -> stringval) -> size;
+      symVal -> datatype = searchst(typetok -> stringval);
+      symVal -> offset = wordaddress(blockoffs[blocknumber], token_alignment);
+      int replace = symVal -> size + symVal -> offset;     
+      blockoffs[blocknumber] = replace;
+  }
 }
 
 
