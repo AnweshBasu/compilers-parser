@@ -107,7 +107,7 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
              ;
-  factor     :  LPAREN expr RPAREN             { $$ = $2; }
+  factor     :  LPAREN expression RPAREN             { $$ = $2; }
              |  IDENTIFIER      
              |  variable
              |  NUMBER
@@ -123,9 +123,9 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   v_list     : v_grp_def SEMICOLON  v_list  {$$ = cons($2, $1);}
              |  v_grp_def SEMICOLON    {$$ = $1;}
              ;
-  vdef       : id_list COLON type {instvars($1, $3);}
+  v_grp_def       : id_list COLON type {instvars($1, $3);}
              ;           
-  type       : simple_type  {$$ = $1;}            
+  type       : simp_type  {$$ = $1;}            
              ;
   simp_type  : IDENTIFIER
              ;
