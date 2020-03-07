@@ -108,9 +108,9 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
              |  factor
              ;
   factor     :  LPAREN expression RPAREN             { $$ = $2; }
-             |  IDENTIFIER      
-             |  variable
+             |  IDENTIFIER   
              |  NUMBER
+	     |  unsigned_constant
              ;
   variable   : IDENTIFIER
              ;
