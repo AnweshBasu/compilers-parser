@@ -239,9 +239,9 @@ TOKEN makegoto(int label) {
 TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) 
 {
   TOKEN funcallTok = makeop(FUNCALLOP);
-  funcallTok -> operands = fn;
-  fn -> link = args;
-  return funcallTok; /*makeprogn(tok, funcallTok);*/
+  funcallTok -> operands = tok;
+  tok -> link = fn;
+  return funcallTok; 
 }
 
 /* makefor makes structures for a for statement.
