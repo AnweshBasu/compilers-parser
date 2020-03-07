@@ -267,10 +267,10 @@ TOKEN makeprogn(TOKEN tok, TOKEN statements)
 /* makeprogram makes the tree structures for the top-level program */
 TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
 {
-  TOKEN prognameTok = talloc();
+  TOKEN progNameTok = talloc();
   TOKEN progTok  = makeop(PROGRAMOP);
   progTok -> operands = name;
-  progName = makeprogn(prognameTok, args);
+  progNameTok = makeprogn(progNameTok, args);
   name -> link = progName;
   progName -> link = statements;
   return progTok;  
