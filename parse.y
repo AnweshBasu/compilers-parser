@@ -203,7 +203,7 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
 
 /* makeintc makes a new integer number token with num as its value */
 TOKEN makeintc(int num) { 
-  TOKEN intc = talloc();
+  TOKEN intcTok = talloc();
   intcTok-> tokentype = NUMBERTOK;
   intcTok -> intval = num;
   intcTok -> basicdt = INTEGER;
@@ -212,7 +212,7 @@ TOKEN makeintc(int num) {
 
 /* makelabel makes a new label, using labelnumber++ */
 TOKEN makelabel() {
-  TOKEN label = makeop(LABELOP);
+  TOKEN labelTok = makeop(LABELOP);
   labelTok -> operands = makenum(labelnumber);
   labelnumber++;
   return labelTok;
@@ -223,7 +223,7 @@ TOKEN makelabel() {
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
   gotoTok -> whichval = GOTOOP;
-  intcTok = makeintc(label);
+  TOKEN intcTok = makeintc(label);
   gotoTok -> operands = intcTok;
   gotoTok -> tokentype = OPERATOR;
   return gotoTok;
@@ -269,9 +269,9 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
 {
   TOKEN prognameTok = talloc();
   TOKEN progTok  = makeop(PROGRAMOP);
-  prog -> operands = name;
-  progName = makeprogn(progstatementTok, statements);
-  name -> link = makeprogn(prognameTok, args);
+  progTok -> operands = name;
+  progName = makeprogn(prognameTok, args);
+  name -> link = progName;
   progName -> link = statements;
   return progTok;  
 }
