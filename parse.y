@@ -110,22 +110,11 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   factor     :  LPAREN expression RPAREN             { $$ = $2; }
              |  IDENTIFIER   
              |  NUMBER
-	     |  unsigned_constant
+	     |  unsigned
              ;
   variable   : IDENTIFIER
              ;
-  sign       : PLUS 
-             | MINUS
-             ;
-  compare_op : EQ 
-             | LT 
-             | GT 
-             | NE 
-             | LE 
-             | GE 
-             | IN
-             ;
-  unsigned_constant : IDENTIFIER 
+  unsigned   : IDENTIFIER 
              | NUMBER 
              | NIL 
              | STRING
