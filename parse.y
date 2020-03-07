@@ -308,7 +308,7 @@ void  instvars(TOKEN idlist, TOKEN typetok)
   while (idlist != NULL) {
       SYMBOL symVal = insertsym(idlist -> stringval);
       symVal -> basicdt = idlist -> basicdt;
-      idlist = idlist -> link
+      idlist = idlist -> link;
       symVal -> kind = VARSYM;
       symVal -> size = searchst(typetok -> stringval) -> size;
       symVal -> datatype = searchst(typetok -> stringval);
