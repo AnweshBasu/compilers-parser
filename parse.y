@@ -236,12 +236,11 @@ TOKEN makegoto(int label) {
 
 /* makefuncall makes a FUNCALL operator and links it to the fn and args.
    tok is a (now) unused token that is recycled. */
-TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) 
-{
-  TOKEN funcallTok = makeop(FUNCALLOP);
-  funcallTok -> operands = fn;
-  tok -> operands -> link = args;
-  return makeprogn(tok, funcallTok);
+TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args){
+  TOKEN tokFunc = makeop(FUNCALLOP);
+  tokFunc -> operands = fn;
+  tokFunc -> operands -> link = args;
+  return makeprogn(tok, tokFunc);
 }
 
 /* makefor makes structures for a for statement.
