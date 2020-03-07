@@ -291,7 +291,7 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
     incr2 -> tokentype = IDENTIFIERTOK;
     strcpy(incr2 -> stringval, incr2 -> stringval);
     incr2 -> link = incr;
-    ident -> operands = incr2;
+    ident2 -> operands = incr2;
     stateOps -> link = ident2;
     ident2 -> link = makegoto(label -> operands -> intval);
     
