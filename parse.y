@@ -283,7 +283,7 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
 	incr1 -> tokentype = IDENTIFIERTOK;
 	strcpy(incr1 -> stringval, identifier -> stringval);
 	TOKEN incr2 = makeop(PLUSOP);
-    inc2->operands = incr1;
+    incr2->operands = incr1;
     incr1->link = makeintc(1);;
 
     TOKEN variableAssign = talloc();
