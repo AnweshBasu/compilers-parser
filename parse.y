@@ -310,10 +310,9 @@ void  instvars(TOKEN idlist, TOKEN typetok)
       idlist = idlist -> link;
       symVal -> kind = VARSYM;
       symVal -> size = searchst(typetok -> stringval) -> size;
-      symVal -> datatype = searchst(typetok -> stringval);
+      symVal -> basicdt = searchst(typetok -> stringval);
       symVal -> offset = wordaddress(blockoffs[blocknumber], alignsize(searchst(typetok -> stringval)));
       blockoffs[blocknumber] = symVal -> size + symVal -> offset;
-      
   }
 }
 
