@@ -200,7 +200,6 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart)
         };
      return tok;
    }
-
 /* makeintc makes a new integer number token with num as its value */
 TOKEN makeintc(int num) { 
   TOKEN intcTok = talloc();
@@ -209,6 +208,22 @@ TOKEN makeintc(int num) {
   intcTok -> basicdt = INTEGER;
   return intcTok;
 }
+
+/* makeprogn makes a PROGN operator and links it to the list of statements.
+   tok is a (now) unused token that is recycled. */
+TOKEN makeprogn(TOKEN tok, TOKEN statements)
+{  tok->tokentype = OPERATOR;
+   tok->whichval = PROGNOP;
+   tok->operands = statements;
+   if (DEBUG & DB_MAKEPROGN)
+     { printf("makeprogn\n");
+       dbugprinttok(tok);
+       dbugprinttok(statements);
+     };
+   return tok;
+ }
+ 
+
 
 /* makelabel makes a new label, using labelnumber++ */
 TOKEN makelabel() {
@@ -238,26 +253,6 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args){
   return makeprogn(tok, funcallTok);
 }
 
-
-TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
-    TOKEN increment = makeop(PLUSOP);
-    increment -> operands = lhs;
-    lhs -> link = rhs;
-    return increment;
-}
-
-TOKEN makeprogn(TOKEN tok, TOKEN statements)
-{  tok->tokentype = OPERATOR;
-   tok->whichval = PROGNOP;
-   tok->operands = statements;
-   if (DEBUG & DB_MAKEPROGN)
-     { printf("makeprogn\n");
-       dbugprinttok(tok);
-       dbugprinttok(statements);
-     };
-   return tok;
- }
-
 /* makeprogram makes the tree structures for the top-level program */
 TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
 {
@@ -269,6 +264,40 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
   progNameTok -> link = statements;
   return progTok;  
 }
+/* makefor makes structures for a for statement.
+   sign is 1 for normal loop, -1 for downto.
+   asg is an assignment statement, e.g. (:= i 1)
+   endexpr is the end expression
+   tok, tokb and tokc are (now) unused tokens that are recycled. */
+TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
+              TOKEN tokc, TOKEN statement)
+{
+	TOKEN label = makelabel();
+	asg -> link = label;
+	TOKEN identifier = talloc(); //change NAME
+	identifier -> tokentype = IDENTIFIERTOK;
+	strcpy(identifier -> stringval, asg ->operands -> stringval);
+	label -> link = makeif(tok, binop(makeop(LEOP), identifier, endexpr), statement, NULL);
+
+	TOKEN incr1 = talloc();
+	incr1 -> tokentype = IDENTIFIERTOK;
+	strcpy(incr1 -> stringval, identifier -> stringval);
+	Token incr2 = makeop(PLUSOP);
+    increment->operands = incr1;
+    incr1->link = makeintc(1);;
+
+    TOKEN variableAssign = talloc();
+    variableAssign -> tokentype = IDENTIFIERTOK;
+    strcpy(variableAssign -> stringval, identifier -> stringval);
+    increment -> operands =  incr1;
+     variableAssign -> link = incr2;
+    TOKEN sepAsign = makeop(ASSIGNOP);
+    sepAsign -> operands = variableAssign;
+    TOKEN stateOps = statement -> operands;
+    stateOps -> link = sepAsign;
+    sepAsign -> link = makegoto(labelZero -> operands -> intval);
+return makeprogn(tokb, asg);
+}	      
 
 int wordaddress(int n, int wordsize)
   { return ((n + wordsize - 1) / wordsize) * wordsize; }
