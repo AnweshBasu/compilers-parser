@@ -11,12 +11,10 @@
 ; it under the terms of the GNU General Public License as published by
 ; the Free Software Foundation; either version 2 of the License, or
 ; (at your option) any later version.
-
 ; This program is distributed in the hope that it will be useful,
 ; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ; GNU General Public License for more details.
-
 ; You should have received a copy of the GNU General Public License
 ; along with this program; if not, see <http://www.gnu.org/licenses/>.
   */
@@ -29,15 +27,12 @@
                      pars1y                   execute the parser
                      i:=j .
                      ^D                       control-D to end input
-
                      pars1y                   execute the parser
                      begin i:=j; if i+j then x:=a+b*c else x:=a*b+c; k:=i end.
                      ^D
-
                      pars1y                   execute the parser
                      if x+y then if y+z then i:=j else k:=2.
                      ^D
-
            You may copy pars1.y to be parse.y and extend it for your
            assignment.  Then use   make parser   as above.
         */
@@ -135,7 +130,6 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
 
 /* You should add your own debugging flags below, and add debugging
    printouts to your programs.
-
    You will want to change DEBUG to turn off printouts once things
    are working.
   */
