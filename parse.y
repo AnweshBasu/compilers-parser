@@ -79,58 +79,84 @@ TOKEN parseresult;
 
 %%
 
-program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
+program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
              ;
   statement  :  BEGINBEGIN statement endpart
                                        { $$ = makeprogn($1,cons($2, $3)); }
              |  IF expression THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
              | FOR assignment TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
              | funcall {$$ = $1;}
-             |  assignment 
+             |  assignment {$$ = $1;}
              ;
-  funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
+  funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
-  expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
-             | expression  {$$ = cons($1, NULL);}     
-             ;
+
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
-             |  END                            { $$ = NULL; }
+             |  SEMICOLON END
+
+             | END          {$$ = NULL;}
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
              ;
-  assignment :  variable ASSIGN expression           { $$ = binop($2, $1, $3); }
+  assignment :  IDENTIFIER ASSIGN expression         { $$ = binop($2, $1, $3); }
              ;
-  expression :  expression PLUS term                 { $$ = binop($2, $1, $3); }
-             |  term 
-             ;        
+
+  simple_expression : term 
+             | simple_expression PLUS term {$$ = binop($2, $1, $3); }
+             | sign term    {$$ = cons($1, $2);}
+             ;
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
-             ;
-  factor     :  LPAREN expression RPAREN             { $$ = $2; }
-             |  IDENTIFIER      
-             |  variable
-             |  NUMBER
-             ;
-  variable   : IDENTIFIER
              ;
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
-  vblock     : VAR v_list block  {$$ = $3;}
+  expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
+             | expression  {$$ = cons($1, NULL);}
+             ;
+  expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
+             | simple_expression  {$$ = $1;}
+             ;
+  sign      : PLUS 
+            | MINUS
+            ;
+  compare_op : EQ 
+             | LT 
+             | GT 
+             | NE 
+             | LE 
+             | GE 
+             | IN
+             ;
+  factor     :  LPAREN expression RPAREN             { $$ = $2; }
+             |  IDENTIFIER
+             |  NUMBER
+             | unsigned_constant
+             ;
+  unsigned_constant : IDENTIFIER 
+             | NUMBER 
+             | NIL 
+             | STRING
+             ;
+  variable : IDENTIFIER
+             ;
+  vblock     : VAR vdef_list block  {$$ = $3;}
              | block
              ;
-  v_list     : v_grp_def SEMICOLON  v_list  {$$ = cons($2, $1);}
-             |  v_grp_def SEMICOLON    {$$ = $1;}
-             ;
-  v_grp_def       : id_list COLON type {instvars($1, $3);}
-             ;           
-  type       : simp_type  {$$ = $1;}            
-             ;
-  simp_type  : IDENTIFIER
-             ;
-  block      :  BEGINBEGIN statement endpart  {$$ =  makeprogn($1,cons($2, $3));}
-             ;             
+  vdef_list : vdef SEMICOLON  vdef_list  {$$ = cons($2, $1);}
+            |  vdef SEMICOLON    {$$ = $1;}
+            ;
+ vdef       : id_list COLON type {instvars($1, $3);}
+              ;
+
+ type      : simple_type  {$$ = $1;}
+            ;
+  simple_type : IDENTIFIER
+            ;
+  block : BEGINBEGIN statement endpart  {$$ = cons($2, $3);}
+        ;
+
 %%
 
 /* You should add your own debugging flags below, and add debugging
