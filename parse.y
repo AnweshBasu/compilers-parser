@@ -83,29 +83,57 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
              ;
   statement  :  BEGINBEGIN statement endpart
                                        { $$ = makeprogn($1,cons($2, $3)); }
-             |  IF expr THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
-             |  assignment
+             |  IF expression THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
+             | FOR assignment TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
+             | funcall {$$ = $1;}
+             |  assignment 
              ;
+  funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
+             ;
+  expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+             | expression  {$$ = cons($1, NULL);}     
+             ;
+  RPAREN {$$ = makefuncall($2, $1, $3);}
+             ;
+
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
              |  END                            { $$ = NULL; }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
              ;
-  assignment :  variable ASSIGN expr           { $$ = binop($2, $1, $3); }
+  assignment :  variable ASSIGN expression           { $$ = binop($2, $1, $3); }
              ;
-  expr       :  expr PLUS term                 { $$ = binop($2, $1, $3); }
+  expression :  expression PLUS term                 { $$ = binop($2, $1, $3); }
              |  term 
-             ;
+             ;        
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
              ;
   factor     :  LPAREN expr RPAREN             { $$ = $2; }
+             |  IDENTIFIER      
              |  variable
              |  NUMBER
              ;
   variable   : IDENTIFIER
              ;
+  id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
+             | IDENTIFIER  {$$ = cons($1, NULL);}
+             ;
+  vblock     : VAR v_list block  {$$ = $3;}
+             | block
+             ;
+  v_list     : v_grp_def SEMICOLON  v_list  {$$ = cons($2, $1);}
+             |  v_grp_def SEMICOLON    {$$ = $1;}
+             ;
+  vdef       : id_list COLON type {instvars($1, $3);}
+             ;           
+  type       : simple_type  {$$ = $1;}            
+             ;
+  simp_type  : IDENTIFIER
+             ;
+  block      :  BEGINBEGIN statement endpart  {$$ =  makeprogn($1,cons($2, $3));}
+             ;             
 %%
 
 /* You should add your own debugging flags below, and add debugging
