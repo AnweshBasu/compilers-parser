@@ -238,39 +238,6 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args){
   return makeprogn(tok, funcallTok);
 }
 
-/* makefor makes structures for a for statement.
-   sign is 1 for normal loop, -1 for downto.
-   asg is an assignment statement, e.g. (:= i 1)
-   endexpr is the end expression
-   tok, tokb and tokc are (now) unused tokens that are recycled. */
-TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
-              TOKEN tokc, TOKEN statement) 
-{
-    TOKEN labelZero = makelabel();
-                asg -> link = labelZero;
-                TOKEN lessThan  = makeop(LEOP);
-                TOKEN identifier = talloc();
-                identifier -> tokentype = IDENTIFIERTOK;
-                strcpy(identifier -> stringval, asg ->operands -> stringval);
-                TOKEN ifStatement = binop(lessThan, identifier, endexpr);
-                labelZero -> link = makeif(tok, ifStatement, statement, NULL);
-                TOKEN variableIncrement = talloc();
-                variableIncrement -> tokentype = IDENTIFIERTOK;
-                strcpy(variableIncrement -> stringval, identifier -> stringval);
-
-                TOKEN increment =  makeplus(variableIncrement, makeintc(1), talloc());
-                TOKEN variableAssign = talloc();
-                variableAssign -> tokentype = IDENTIFIERTOK;
-                strcpy(variableAssign -> stringval, identifier -> stringval);
-                increment -> operands =  variableIncrement;
-                 variableAssign -> link = increment;
-                TOKEN sepAsign = makeop(ASSIGNOP);
-                sepAsign -> operands = variableAssign;
-                TOKEN stateOps = statement -> operands;
-                stateOps -> link = sepAsign;
-                sepAsign -> link = makegoto(labelZero -> operands -> intval);
-		    return makeprogn(tokb, asg);
-}
 
 TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
     TOKEN increment = makeop(PLUSOP);
