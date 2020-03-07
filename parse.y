@@ -213,7 +213,7 @@ TOKEN makeintc(int num) {
 /* makelabel makes a new label, using labelnumber++ */
 TOKEN makelabel() {
   TOKEN labelTok = makeop(LABELOP);
-  labelTok -> operands = makenum(labelnumber);
+  labelTok -> operands = makeintc(labelnumber);
   labelnumber++;
   return labelTok;
 }
