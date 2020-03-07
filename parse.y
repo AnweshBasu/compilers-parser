@@ -114,6 +114,22 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
              ;
   variable   : IDENTIFIER
              ;
+  sign       : PLUS 
+             | MINUS
+             ;
+  compare_op : EQ 
+             | LT 
+             | GT 
+             | NE 
+             | LE 
+             | GE 
+             | IN
+             ;
+  unsigned_constant : IDENTIFIER 
+             | NUMBER 
+             | NIL 
+             | STRING
+             ;	     
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
