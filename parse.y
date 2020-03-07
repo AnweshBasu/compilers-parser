@@ -271,8 +271,8 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
   TOKEN progTok  = makeop(PROGRAMOP);
   progTok -> operands = name;
   progNameTok = makeprogn(progNameTok, args);
-  name -> link = progName;
-  progName -> link = statements;
+  name -> link = progNameTok;
+  progNameTok -> link = statements;
   return progTok;  
 }
 
