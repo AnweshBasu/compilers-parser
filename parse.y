@@ -273,28 +273,25 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
               TOKEN tokc, TOKEN statement)
 {
     TOKEN label = makelabel();
-    asg -> link = label;
     TOKEN ident1 = talloc();
+    TOKEN incr1 = talloc();
+    TOKEN incr = makeop(PLUSOP);
+    TOKEN incr2 = talloc();
+    TOKEN ident2 = makeop(ASSIGNOP);
+    
+    asg -> link = label;
     ident1 -> tokentype = IDENTIFIERTOK;
     strcpy(ident1 -> stringval, asg ->operands -> stringval);
     label -> link = makeif(tok, binop(makeop(LEOP), ident1, endexpr), statement, NULL);
-
-    TOKEN incr1 = talloc();
     incr1 -> tokentype = IDENTIFIERTOK;
     strcpy(incr1 -> stringval, ident1 -> stringval);
-    TOKEN incr = makeop(PLUSOP);
     incr->operands = incr1;
-    incr1->link = makeintc(1);;
-
-    TOKEN incr2 = talloc();
+    incr1->link = makeintc(1);  
     incr2 -> tokentype = IDENTIFIERTOK;
     strcpy(incr2 -> stringval, ident1 -> stringval);
     incr2 -> link = incr;
-
-    TOKEN ident2 = makeop(ASSIGNOP);
     ident2 -> operands = incr2;
-    TOKEN stateOps = statement -> operands;
-    stateOps -> link = ident2;
+    statement -> operands -> link = ident2;
     ident2 -> link = makegoto(label -> operands -> intval);
     
     return makeprogn(tokb, asg);
