@@ -110,15 +110,10 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   factor     :  LPAREN expression RPAREN             { $$ = $2; }
              |  IDENTIFIER   
              |  NUMBER
-	     |  unsigned
+	     |  STRING
              ;
   variable   : IDENTIFIER
-             ;
-  unsigned   : IDENTIFIER 
-             | NUMBER 
-             | NIL 
-             | STRING
-             ;	     
+             ;    
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
@@ -237,10 +232,10 @@ TOKEN makegoto(int label) {
 /* makefuncall makes a FUNCALL operator and links it to the fn and args.
    tok is a (now) unused token that is recycled. */
 TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args){
-  TOKEN tokFunc = makeop(FUNCALLOP);
-  tokFunc -> operands = fn;
-  tokFunc -> operands -> link = args;
-  return makeprogn(tok, tokFunc);
+  TOKEN funcallTok = makeop(FUNCALLOP);
+  funcallTok -> operands = fn;
+  funcallTok -> operands -> link = args;
+  return makeprogn(tok, funcallTok);
 }
 
 /* makefor makes structures for a for statement.
