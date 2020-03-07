@@ -272,31 +272,32 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements)
 TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
               TOKEN tokc, TOKEN statement)
 {
-	TOKEN label = makelabel();
-	asg -> link = label;
-	TOKEN identifier = talloc(); //change NAME
-	identifier -> tokentype = IDENTIFIERTOK;
-	strcpy(identifier -> stringval, asg ->operands -> stringval);
-	label -> link = makeif(tok, binop(makeop(LEOP), identifier, endexpr), statement, NULL);
+	  TOKEN label = makelabel();
+    asg -> link = label;
+    TOKEN identifier = talloc(); //change NAME
+    identifier -> tokentype = IDENTIFIERTOK;
+    strcpy(identifier -> stringval, asg ->operands -> stringval);
+    label -> link = makeif(tok, binop(makeop(LEOP), identifier, endexpr), statement, NULL);
 
-	TOKEN incr1 = talloc();
-	incr1 -> tokentype = IDENTIFIERTOK;
-	strcpy(incr1 -> stringval, identifier -> stringval);
-	TOKEN incr2 = makeop(PLUSOP);
-    incr2->operands = incr1;
+    TOKEN incr1 = talloc();
+    incr1 -> tokentype = IDENTIFIERTOK;
+    strcpy(incr1 -> stringval, identifier -> stringval);
+    TOKEN incr = makeop(PLUSOP);
+    incr->operands = incr1;
     incr1->link = makeintc(1);;
 
-    TOKEN variableAssign = talloc();
-    variableAssign -> tokentype = IDENTIFIERTOK;
-    strcpy(variableAssign -> stringval, identifier -> stringval);
-    incr2 -> operands =  incr1;
-     variableAssign -> link = incr2;
-    TOKEN sepAsign = makeop(ASSIGNOP);
-    sepAsign -> operands = variableAssign;
+    TOKEN incr2 = talloc();
+    incr2 -> tokentype = IDENTIFIERTOK;
+    strcpy(incr2 -> stringval, identifier -> stringval);
+    incr2 -> link = incr;
+
+    TOKEN ident = makeop(ASSIGNOP);
+    ident -> operands = incr2;
     TOKEN stateOps = statement -> operands;
-    stateOps -> link = sepAsign;
-    sepAsign -> link = makegoto(label -> operands -> intval);
-return makeprogn(tokb, asg);
+    stateOps -> link = ident;
+    ident -> link = makegoto(label -> operands -> intval);
+    
+    return makeprogn(tokb, asg);
 }	      
 
 int wordaddress(int n, int wordsize)
