@@ -93,9 +93,6 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
              | expression  {$$ = cons($1, NULL);}     
              ;
-  RPAREN {$$ = makefuncall($2, $1, $3);}
-             ;
-
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
              |  END                            { $$ = NULL; }
              ;
