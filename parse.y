@@ -1,9 +1,10 @@
-%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 30 Jul 13   */
+%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 25 Jul 19   */
 
-/* Copyright (c) 2013 Gordon S. Novak Jr. and
+/* Copyright (c) 2019 Gordon S. Novak Jr. and
    The University of Texas at Austin. */
 
 /* 14 Feb 01; 01 Oct 04; 02 Mar 07; 27 Feb 08; 24 Jul 09; 02 Aug 12 */
+/* 30 Jul 13 */
 
 /*
 ; This program is free software; you can redistribute it and/or modify
@@ -78,84 +79,58 @@ TOKEN parseresult;
 
 %%
 
-program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
+program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
              ;
   statement  :  BEGINBEGIN statement endpart
                                        { $$ = makeprogn($1,cons($2, $3)); }
              |  IF expression THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
              | FOR assignment TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
              | funcall {$$ = $1;}
-             |  assignment {$$ = $1;}
+             |  assignment 
              ;
-  funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
+  funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
-
+  expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+             | expression  {$$ = cons($1, NULL);}     
+             ;
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
-             |  SEMICOLON END
-
-             | END          {$$ = NULL;}
+             |  END                            { $$ = NULL; }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
              ;
-  assignment :  IDENTIFIER ASSIGN expression         { $$ = binop($2, $1, $3); }
+  assignment :  variable ASSIGN expression           { $$ = binop($2, $1, $3); }
              ;
-
-  simple_expression : term 
-             | simple_expression PLUS term {$$ = binop($2, $1, $3); }
-             | sign term    {$$ = cons($1, $2);}
-             ;
+  expression :  expression PLUS term                 { $$ = binop($2, $1, $3); }
+             |  term 
+             ;        
   term       :  term TIMES factor              { $$ = binop($2, $1, $3); }
              |  factor
+             ;
+  factor     :  LPAREN expression RPAREN             { $$ = $2; }
+             |  IDENTIFIER      
+             |  variable
+             |  NUMBER
+             ;
+  variable   : IDENTIFIER
              ;
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
-  expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
-             | expression  {$$ = cons($1, NULL);}
-             ;
-  expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
-             | simple_expression  {$$ = $1;}
-             ;
-  sign      : PLUS 
-            | MINUS
-            ;
-  compare_op : EQ 
-             | LT 
-             | GT 
-             | NE 
-             | LE 
-             | GE 
-             | IN
-             ;
-  factor     :  LPAREN expression RPAREN             { $$ = $2; }
-             |  IDENTIFIER
-             |  NUMBER
-             | unsigned_constant
-             ;
-  unsigned_constant : IDENTIFIER 
-             | NUMBER 
-             | NIL 
-             | STRING
-             ;
-  variable : IDENTIFIER
-             ;
-  vblock     : VAR vdef_list block  {$$ = $3;}
+  vblock     : VAR v_list block  {$$ = $3;}
              | block
              ;
-  vdef_list : vdef SEMICOLON  vdef_list  {$$ = cons($2, $1);}
-            |  vdef SEMICOLON    {$$ = $1;}
-            ;
- vdef       : id_list COLON type {instvars($1, $3);}
-              ;
-
- type      : simple_type  {$$ = $1;}
-            ;
-  simple_type : IDENTIFIER
-            ;
-  block : BEGINBEGIN statement endpart  {$$ = cons($2, $3);}
-        ;
-
+  v_list     : v_grp_def SEMICOLON  v_list  {$$ = cons($2, $1);}
+             |  v_grp_def SEMICOLON    {$$ = $1;}
+             ;
+  v_grp_def       : id_list COLON type {instvars($1, $3);}
+             ;           
+  type       : simp_type  {$$ = $1;}            
+             ;
+  simp_type  : IDENTIFIER
+             ;
+  block      :  BEGINBEGIN statement endpart  {$$ =  makeprogn($1,cons($2, $3));}
+             ;             
 %%
 
 /* You should add your own debugging flags below, and add debugging
@@ -176,7 +151,6 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { p
 
    /*  Note: you should add to the above values and insert debugging
        printouts in your routines similar to those that are shown here.     */
-
 
 
 TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
