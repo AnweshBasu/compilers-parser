@@ -79,18 +79,20 @@ TOKEN parseresult;
 
 %%
 
-program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
+program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { parseresult = makeprogram($2, $4, $7); }
              ;
   statement  :  BEGINBEGIN statement endpart
                                        { $$ = makeprogn($1,cons($2, $3)); }
              |  IF expression THEN statement endif   { $$ = makeif($1, $2, $4, $5); }
              | FOR assignment TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
              | funcall {$$ = $1;}
-             |  assignment {$$ = $1;}
+             |  assignment 
              ;
-  funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
+  funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
-
+  expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+             | expression  {$$ = cons($1, NULL);}     
+             ;
   endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
              |  SEMICOLON END
 
@@ -111,9 +113,6 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { p
              ;
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
-             ;
-  expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
-             | expression  {$$ = cons($1, NULL);}
              ;
   expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
              | simple_expression  {$$ = $1;}
