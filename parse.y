@@ -314,7 +314,7 @@ void  instvars(TOKEN idlist, TOKEN typetok)
       idlist = idlist->link; 
       symbol -> basicdt = searchst(typetok -> stringval);
       symbol -> offset = wordaddress(blockoffs[blocknumber], token_alignment);  
-      blockoffs[blocknumber] = symbol -> (size + symbol) -> offset;
+      blockoffs[blocknumber] = symbol -> size + symbol -> offset;
   }
 }
 
