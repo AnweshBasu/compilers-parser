@@ -282,20 +282,20 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr,
 	TOKEN incr1 = talloc();
 	incr1 -> tokentype = IDENTIFIERTOK;
 	strcpy(incr1 -> stringval, identifier -> stringval);
-	Token incr2 = makeop(PLUSOP);
-    increment->operands = incr1;
+	TOKEN incr2 = makeop(PLUSOP);
+    inc2->operands = incr1;
     incr1->link = makeintc(1);;
 
     TOKEN variableAssign = talloc();
     variableAssign -> tokentype = IDENTIFIERTOK;
     strcpy(variableAssign -> stringval, identifier -> stringval);
-    increment -> operands =  incr1;
+    incr2 -> operands =  incr1;
      variableAssign -> link = incr2;
     TOKEN sepAsign = makeop(ASSIGNOP);
     sepAsign -> operands = variableAssign;
     TOKEN stateOps = statement -> operands;
     stateOps -> link = sepAsign;
-    sepAsign -> link = makegoto(labelZero -> operands -> intval);
+    sepAsign -> link = makegoto(label -> operands -> intval);
 return makeprogn(tokb, asg);
 }	      
 
