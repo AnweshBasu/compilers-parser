@@ -307,10 +307,11 @@ void  instvars(TOKEN idlist, TOKEN typetok)
 SYMBOL symbol;
   while (idlist != NULL) {
       symbol = insertsym(idlist -> stringval);
+      symbol -> basicdt = idlist -> basicdt;
       idlist = idlist -> link;
       symbol -> kind = VARSYM;
       symbol -> size = searchst(typetok -> stringval) -> size;
-      symbol -> basicdt = idlist -> basicdt;
+      
       symbol -> datatype = searchst(typetok -> stringval);
       symbol -> offset = wordaddress(blockoffs[blocknumber], alignsize(searchst(typetok -> stringval)));
       blockoffs[blocknumber] = symbol -> size + symbol -> offset;
