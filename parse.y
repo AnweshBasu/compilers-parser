@@ -107,8 +107,8 @@ program    :  PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON vblock DOT   { 
   id_list    : IDENTIFIER COMMA id_list  {$$ = cons($1, $3);}
              | IDENTIFIER  {$$ = cons($1, NULL);}
              ;
-  expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
-             | simple_expression  {$$ = $1;}
+  expression : expression PLUS term                 { $$ = binop($2, $1, $3); }
+             |  term 
              ;
   sign      : PLUS 
             | MINUS
