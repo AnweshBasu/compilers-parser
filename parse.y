@@ -81,7 +81,7 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON lblock DOT   { p
              | FOR assign TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
              | funcall {$$ = $1;}
              |  assign {$$ = $1;}
-             |  WHILE expression DO statement             { $$ = makewhen($1, $2, $3, $4); }
+             |  WHILE expression DO statement             { $$ = makewhile($1, $2, $3, $4); }
              |  REPEAT statement_list UNTIL expression    { $$ = makerepeat($1, $2, $3, $4); }
              |  GOTO NUMBER                               { $$ = dogoto($1, $2); }
              | label
@@ -410,7 +410,7 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
   return array;
 }
 
-TOKEN makewhen(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
+TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
   TOKEN label = makelabel();
   label->link = makeif(tok, expr, statement, NULL);
   int val = labelnumber;
@@ -431,20 +431,20 @@ void insttype(TOKEN typename, TOKEN typetok) {
   SYMBOL symbol = searchins(typename->stringval);
   symbol->kind = TYPESYM;
   symbol->datatype = typetok->symtype;
-  int tokSize = typetok->symtype->size;
-  symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : tokSize;
+  int length = typetok->symtype->size;
+  symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : length;
 }
 
 TOKEN instrec(TOKEN rectok, TOKEN argstok) {
-  SYMBOL record = symalloc();
-  record->kind = RECORDSYM;
- 	record->datatype = makesym(argstok->stringval);
+  SYMBOL data = symalloc();
+  data->kind = RECORDSYM;
+ 	data->datatype = makesym(argstok->stringval);
  	int size = 0;
   if ((argstok->symtype != NULL)) {
     size += argstok->symtype->size;
- 		record->datatype->datatype = argstok->symtype;
+ 		data->datatype->datatype = argstok->symtype;
  	}
-   SYMBOL val = record->datatype;
+   SYMBOL val = data->datatype;
  	while (argstok -> link) {
     argstok = argstok->link;
  		val->link = makesym(argstok->stringval);
@@ -454,8 +454,8 @@ TOKEN instrec(TOKEN rectok, TOKEN argstok) {
  			val->datatype = argstok->symtype;
  		}
  	}
- 	record->size = wordaddress(size, 16);
- 	rectok->symtype = record;
+ 	data->size = wordaddress(size, 16);
+ 	rectok->symtype = data;
  	return rectok;
 }
 
@@ -463,8 +463,8 @@ void instconst(TOKEN idtok, TOKEN consttok) {
 	  SYMBOL symbolVal = insertsym(idtok->stringval);
   	symbolVal->basicdt = consttok->basicdt;
 	  symbolVal->kind = CONSTSYM;
-    int switchCheck = consttok->basicdt;
-    switch(switchCheck) {
+    int c = consttok->basicdt;
+    switch(c) {
       case INTEGER:
         symbolVal->constval.intnum = consttok->intval;
         break;
@@ -715,8 +715,8 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) {
   for (int currentData = 0; currentData < 3; currentData++) {
     temp = temp -> datatype;
   }
-  TOKEN tokSize = makeintc( temp->size);
-  fn->link = tokSize;
+  TOKEN length = makeintc( temp->size);
+  fn->link = length;
   return binop(tok, args, tokFunc);
 }
 
