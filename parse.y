@@ -88,6 +88,16 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON lblock DOT   { p
              ;
 assign :variable ASSIGN expression   { $$ = binop($2, $1, $3); }
               ;
+statement_list:  statement                           { $$ = $1; }
+              |  statement_list SEMICOLON statement  { $$ = cons($1, $3); }
+              ;
+
+field_list   :  fields                       { $$ = $1; }
+             |  fields SEMICOLON field_list  { $$ = cons($1, $3); }
+             ;
+lblock       :  LABEL numlist SEMICOLON cblock  { instlabel($2); $$ = $4; }
+             |  cblock                       { $$ = $1; }
+             ;
 cblock       :  CONST cdef_list tblock     { $$ = $3 ;}
              |  tblock
              ;
@@ -113,17 +123,6 @@ block        :  BEGINBEGIN statement endpart { $$ = cons($2, $3); }
 
 label        :  NUMBER COLON statement  { $$ = dolabel($1, $2, $3); }
              ;
-
-statement_list:  statement                           { $$ = $1; }
-              |  statement_list SEMICOLON statement  { $$ = cons($1, $3); }
-              ;
-
-field_list   :  fields                       { $$ = $1; }
-             |  fields SEMICOLON field_list  { $$ = cons($1, $3); }
-             ;
-lblock       :  LABEL numlist SEMICOLON cblock  { instlabel($2); $$ = $4; }
-             |  cblock                       { $$ = $1; }
-             ;
  simple_expression : term   { $$ = $1; }
              | simple_expression plus_op term { $$ = binop($2, $1, $3); }
              | sign term     { $$ = unaryop($1, $2); }
@@ -135,7 +134,11 @@ plus_op      :  PLUS | MINUS | OR;
              ;
 vdef         :  id_list COLON type          { instvars($1, $3); }
              ;
-
+cdef_list    :  cdef SEMICOLON              { $$ = $1; }
+             |  cdef_list cdef SEMICOLON
+             ;
+cdef         :  IDENTIFIER EQ constant  { instconst($1, $3); }
+             ;
 times_op : TIMES | DIVIDE | DIV | MOD | AND
 term         :  term times_op factor           { $$ = binop($2, $1, $3); }
              |  factor
@@ -144,16 +147,20 @@ term         :  term times_op factor           { $$ = binop($2, $1, $3); }
 id_list      :  IDENTIFIER                  { $$ = $1; }
              |  IDENTIFIER COMMA id_list    { $$ = cons($1, $3); }
              ;
+expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+             | expression  {$$ = cons($1, NULL);}
+             ;
+
+sign         :  PLUS | MINUS  { $$ = $1; }
+
+tblock       :  TYPE tdef_list vblock  { $$ = $3; }
+             |  vblock
+             ;
 constant :  IDENTIFIER              { $$ = $1; }
              | sign IDENTIFIER {$$ = $2;}
              |  sign NUMBER             { $$ = $2; }
              |  NUMBER                  { $$ = $1; }
              |  STRING                  { $$ = $1; }
-             ;
-cdef_list    :  cdef SEMICOLON              { $$ = $1; }
-             |  cdef_list cdef SEMICOLON
-             ;
-cdef         :  IDENTIFIER EQ constant  { instconst($1, $3); }
              ;
 
 numlist       :  NUMBER             { $$ = $1; }
@@ -166,16 +173,6 @@ simple_type  :  IDENTIFIER                       { $$ = $1; }
              |  LPAREN id_list RPAREN            { $$ = instenum($2); }
              |  constant DOTDOT constant { $$ = instdotdot($1, $2, $3); }
              ;
-expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
-             | expression  {$$ = cons($1, NULL);}
-             ;
-
-sign         :  PLUS | MINUS  { $$ = $1; }
-
-tblock       :  TYPE tdef_list vblock  { $$ = $3; }
-             |  vblock
-             ;
-
 expression : expression compare_op simple_expression {$$ = binop($2, $1, $3);}
              | simple_expression  {$$ = $1;}
              ;
