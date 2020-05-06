@@ -81,7 +81,7 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON lblock DOT   { p
              | FOR assign TO expression DO statement {$$  = makefor(1, $1, $2, $3, $4, $5, $6);}
              | funcall {$$ = $1;}
              |  assign {$$ = $1;}
-             |  WHILE expression DO statement             { $$ = makewhile($1, $2, $3, $4); }
+             |  WHILE expression DO statement             { $$ = makewhen($1, $2, $3, $4); }
              |  REPEAT statement_list UNTIL expression    { $$ = makerepeat($1, $2, $3, $4); }
              |  GOTO NUMBER                               { $$ = dogoto($1, $2); }
              | label
@@ -410,7 +410,7 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
   return array;
 }
 
-TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
+TOKEN makewhen(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
   TOKEN label = makelabel();
   label->link = makeif(tok, expr, statement, NULL);
   int val = labelnumber;
