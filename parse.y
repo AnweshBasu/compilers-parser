@@ -67,7 +67,7 @@ TOKEN parseresult;
 %token COMMA
 %token SEMICOLON COLON LPAREN RPAREN LBRACKET RBRACKET DOTDOT
 
-%token list BEGINBEGIN
+%token ARRAY BEGINBEGIN
 %token CASE CONST DO DOWNTO ELSE END FILEFILE FOR FUNCTION GOTO IF LABEL NIL
 %token OF PACKED PROCEDURE PROGRAM RECORD REPEAT SET THEN TO TYPE UNTIL
 %token VAR WHILE WITH
@@ -111,7 +111,7 @@ endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
   variable     :  IDENTIFIER                            { $$ = $1; }
              |  variable DOT IDENTIFIER               { $$ = reducedot($1, $2, $3); }
              |  variable POINT                        { $$ = cons($2, $1); }
-             |  variable LBRACKET expression_list RBRACKET  { $$ = listref($1, $2, $3, $4); }
+             |  variable LBRACKET expression_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
@@ -187,7 +187,7 @@ compare_op : EQ
 unsigned_constant:  IDENTIFIER | NUMBER | NIL | STRING
               ;
  type      : simple_type  {$$ = $1;}
-              |  list LBRACKET simple_type_list RBRACKET OF type { $$ = instlist($3, $6); }
+              |  ARRAY LBRACKET simple_type_list RBRACKET OF type { $$ = instarray($3, $6); }
              |  RECORD arg_list END                   { $$ = instrec($1, $2); }
              |  POINT IDENTIFIER                        { $$ = instpoint($1, $2); }
              ;
@@ -313,26 +313,26 @@ TOKEN instfields(TOKEN idlist, TOKEN typetok) {
   return final;
 }
 
-TOKEN instlist(TOKEN bounds, TOKEN typetok) {
-  SYMBOL list = symalloc();
-  TOKEN toklist = talloc();
-  list->kind = listSYM;
+TOKEN instarray(TOKEN bounds, TOKEN typetok) {
+  SYMBOL array = symalloc();
+  TOKEN tokArray = talloc();
+  array->kind = ARRAYSYM;
   SYMBOL range = bounds -> symtype;
-  list->lowbound = range->lowbound;
-  list->highbound = range->highbound;
+  array->lowbound = range->lowbound;
+  array->highbound = range->highbound;
 
-  list->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
+  array->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
   if (bounds->link != NULL) {
-    list->datatype = symalloc();
-    list->datatype ->highbound = list->highbound;
-    list->datatype ->lowbound = list->lowbound;
-    list->datatype ->kind = listSYM;
-    list->datatype ->datatype = searchst(typetok->stringval);
+    array->datatype = symalloc();
+    array->datatype ->highbound = array->highbound;
+    array->datatype ->lowbound = array->lowbound;
+    array->datatype ->kind = ARRAYSYM;
+    array->datatype ->datatype = searchst(typetok->stringval);
   }
   bounds = bounds -> link != NULL ? bounds->link : bounds;
-  list->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
-  toklist->symtype = list;
-  return toklist;
+  array->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
+  tokArray->symtype = array;
+  return tokArray;
 }
 
 
@@ -393,21 +393,21 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
   SYMBOL data_type = searchst(record->datatype->namestring);
   initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
 
-  TOKEN list = makeop(AREFOP);
+  TOKEN array = makeop(AREFOP);
   if (var->whichval == AREFOP) {
     if (var->operands->link->tokentype == NUMBERTOK) {
       var->operands->link->intval += offsetVal;
     }
-    list = var;
-    list->basicdt = initVal;
+    array = var;
+    array->basicdt = initVal;
   } else {
     TOKEN off_tok = makeintc(offsetVal);
-    list = makearef(var, off_tok, dot);
-    list->basicdt = initVal;
-    list->whichval = AREFOP;
-    list->symtype = record;
+    array = makearef(var, off_tok, dot);
+    array->basicdt = initVal;
+    array->whichval = AREFOP;
+    array->symtype = record;
   }
-  return list;
+  return array;
 }
 
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
@@ -477,7 +477,7 @@ void instconst(TOKEN idtok, TOKEN consttok) {
     }
 }
 
-TOKEN listref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
+TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
    tok = makeintc(0);
  	SYMBOL tempVal = searchst(arr->stringval) -> datatype;
  	SYMBOL recordVal = tempVal->datatype->datatype;
@@ -493,14 +493,14 @@ TOKEN listref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
     cons(arr, addition);
     TOKEN ret = makeop(AREFOP);
     unaryop(ret, arr);
-     int intTok = tempVal->datatype->kind != listSYM ? tokb->intval = recordVal->size
-      : tempVal->kind == listSYM ?  tokb->intval = recordVal->datatype->size * (recordVal->datatype->highbound - recordVal->datatype->lowbound + 1) : 0;
+     int intTok = tempVal->datatype->kind != ARRAYSYM ? tokb->intval = recordVal->size
+      : tempVal->kind == ARRAYSYM ?  tokb->intval = recordVal->datatype->size * (recordVal->datatype->highbound - recordVal->datatype->lowbound + 1) : 0;
  		tokb = makeintc(intTok);
-    int tokValues = tempVal->datatype->kind != listSYM ? -recordVal->size : 
-      tempVal->kind == listSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
+    int tokValues = tempVal->datatype->kind != ARRAYSYM ? -recordVal->size : 
+      tempVal->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
         -(searchst(subs->link->stringval)->constval.intnum + 1)*recordVal->datatype->size : tok -> intval;
     tok -> intval = tokValues;
-    subs-> link = tempVal->datatype->kind == listSYM && tempVal->kind == listSYM ? NULL : subs-> link;
+    subs-> link = tempVal->datatype->kind == ARRAYSYM && tempVal->kind == ARRAYSYM ? NULL : subs-> link;
     tokb->link = subs;
  		TOKEN multiply = makeop(TIMESOP);
     unaryop(multiply, tokb);
