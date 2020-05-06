@@ -1,44 +1,26 @@
-%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 25 Jul 19   */
+%{
 
-/* Copyright (c) 2019 Gordon S. Novak Jr. and
+/* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 30 Jul 13   */
+
+/* Copyright (c) 2013 Gordon S. Novak Jr. and
    The University of Texas at Austin. */
 
 /* 14 Feb 01; 01 Oct 04; 02 Mar 07; 27 Feb 08; 24 Jul 09; 02 Aug 12 */
-/* 30 Jul 13 */
 
 /*
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
 ; the Free Software Foundation; either version 2 of the License, or
 ; (at your option) any later version.
+
 ; This program is distributed in the hope that it will be useful,
 ; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ; GNU General Public License for more details.
+
 ; You should have received a copy of the GNU General Public License
 ; along with this program; if not, see <http://www.gnu.org/licenses/>.
   */
-
-
-/* NOTE:   Copy your lexan.l lexical analyzer to this directory.      */
-
-       /* To use:
-                     make pars1y              has 1 shift/reduce conflict
-                     pars1y                   execute the parser
-                     i:=j .
-                     ^D                       control-D to end input
-                     pars1y                   execute the parser
-                     begin i:=j; if i+j then x:=a+b*c else x:=a*b+c; k:=i end.
-                     ^D
-                     pars1y                   execute the parser
-                     if x+y then if y+z then i:=j else k:=2.
-                     ^D
-           You may copy pars1.y to be parse.y and extend it for your
-           assignment.  Then use   make parser   as above.
-        */
-
-        /* Yacc reports 1 shift/reduce conflict, due to the ELSE part of
-           the IF statement, but Yacc's default resolves it in the right way.*/
 
 #include <stdio.h>
 #include <ctype.h>
@@ -49,15 +31,11 @@
 #include "parse.h"
 #include "pprint.h"
 
-			/* define the type of the Yacc stack element to be TOKEN */
-
 #define YYSTYPE TOKEN
 
 TOKEN parseresult;
 
 %}
-
-/* Order of tokens corresponds to tokendefs.c; do not change */
 
 %token IDENTIFIER STRING NUMBER
 
@@ -91,7 +69,7 @@ assign :variable ASSIGN expression   { $$ = binop($2, $1, $3); }
 cblock       :  CONST cdef_list tblock     { $$ = $3 ;}
              |  tblock
              ;
-funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
+funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
 endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
             |  SEMICOLON END
@@ -101,7 +79,7 @@ endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
   variable     :  IDENTIFIER                            { $$ = $1; }
              |  variable DOT IDENTIFIER               { $$ = reducedot($1, $2, $3); }
              |  variable POINT                        { $$ = cons($2, $1); }
-             |  variable LBRACKET expression_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
+             |  variable LBRACKET expr_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
@@ -166,7 +144,7 @@ simple_type  :  IDENTIFIER                       { $$ = $1; }
              |  LPAREN id_list RPAREN            { $$ = instenum($2); }
              |  constant DOTDOT constant { $$ = instdotdot($1, $2, $3); }
              ;
-expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
              | expression  {$$ = cons($1, NULL);}
              ;
 
@@ -227,11 +205,7 @@ factor       :         unsigned_constant
 
 %%
 
-int labelnumber = 0;  /* sequential counter for internal label numbers */
-
-   /*  Note: you should add to the above values and insert debugging
-       printouts in your routines similar to those that are shown here.     */
-
+int labelnumber = 0;
 
 int labels[20];
 
@@ -394,15 +368,16 @@ TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
  	return referenceVal;
 }
 
-/* makeprogram makes the tree structures for the top-level program */
 TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
-  TOKEN progNameTok = talloc();
-  TOKEN progTok  = makeop(PROGRAMOP);
-  progTok -> operands = name;
-  progNameTok = makeprogn(progNameTok, args);
-  name -> link = progNameTok;
-  progNameTok -> link = statements;
-  return progTok;  
+    TOKEN nameProg = talloc();
+    TOKEN statementProg = talloc();
+    TOKEN prog  = makeop(PROGRAMOP);
+    makeprogn(nameProg, args);
+    unaryop(prog, name);
+    makeprogn(statementProg, statements);
+    cons(nameProg, statementProg);
+    cons(name, nameProg);
+    return prog;
 }
 
 void instvars(TOKEN idlist, TOKEN typetok) {
