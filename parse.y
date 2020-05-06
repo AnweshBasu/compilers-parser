@@ -314,39 +314,39 @@ TOKEN instfields(TOKEN idlist, TOKEN typetok) {
 }
 
 TOKEN instarray(TOKEN bounds, TOKEN typetok) {
-  SYMBOL array = symalloc();
+  SYMBOL list = symalloc();
   TOKEN tokArray = talloc();
-  array->kind = ARRAYSYM;
+  list->kind = ARRAYSYM;
   SYMBOL range = bounds -> symtype;
-  array->lowbound = range->lowbound;
-  array->highbound = range->highbound;
+  list->lowbound = range->lowbound;
+  list->highbound = range->highbound;
 
-  array->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
+  list->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
   if (bounds->link != NULL) {
-    array->datatype = symalloc();
-    array->datatype ->highbound = array->highbound;
-    array->datatype ->lowbound = array->lowbound;
-    array->datatype ->kind = ARRAYSYM;
-    array->datatype ->datatype = searchst(typetok->stringval);
+    list->datatype = symalloc();
+    list->datatype ->highbound = list->highbound;
+    list->datatype ->lowbound = list->lowbound;
+    list->datatype ->kind = ARRAYSYM;
+    list->datatype ->datatype = searchst(typetok->stringval);
   }
   bounds = bounds -> link != NULL ? bounds->link : bounds;
-  array->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
-  tokArray->symtype = array;
+  list->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
+  tokArray->symtype = list;
   return tokArray;
 }
 
 
 TOKEN instenum(TOKEN idlist) {
-  int currentVal = 0;
+  int val = 0;
   while(idlist) {
-    TOKEN constVal = makeintc(currentVal);
-    currentVal++;
+    TOKEN constVal = makeintc(val);
+    val++;
     instconst(idlist, constVal);
     idlist = idlist -> link;
   }
   TOKEN input = talloc();
   int left = 0;
-  int right = currentVal - 1;
+  int right = val - 1;
   SYMBOL subrange = symalloc();
   subrange->kind = SUBRANGE;
   subrange->lowbound = 0;
@@ -357,12 +357,12 @@ TOKEN instenum(TOKEN idlist) {
 }
 
 TOKEN instpoint(TOKEN tok, TOKEN typename) {
-  SYMBOL pointer = symalloc();
-  pointer->kind = POINTERSYM;
-  pointer->datatype = searchins(typename->stringval);
-  pointer -> size = basicsizes[POINTER];
-  pointer -> basicdt = POINTER;
-  tok->symtype = pointer;
+  SYMBOL ptr = symalloc();
+  ptr->kind = POINTERSYM;
+  ptr->datatype = searchins(typename->stringval);
+  ptr -> size = basicsizes[POINTER];
+  ptr -> basicdt = POINTER;
+  tok->symtype = ptr;
   return tok;
 }
 
