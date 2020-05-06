@@ -1,26 +1,44 @@
-%{
+%{     /* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 25 Jul 19   */
 
-/* pars1.y    Pascal Parser      Gordon S. Novak Jr.  ; 30 Jul 13   */
-
-/* Copyright (c) 2013 Gordon S. Novak Jr. and
+/* Copyright (c) 2019 Gordon S. Novak Jr. and
    The University of Texas at Austin. */
 
 /* 14 Feb 01; 01 Oct 04; 02 Mar 07; 27 Feb 08; 24 Jul 09; 02 Aug 12 */
+/* 30 Jul 13 */
 
 /*
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
 ; the Free Software Foundation; either version 2 of the License, or
 ; (at your option) any later version.
-
 ; This program is distributed in the hope that it will be useful,
 ; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ; GNU General Public License for more details.
-
 ; You should have received a copy of the GNU General Public License
 ; along with this program; if not, see <http://www.gnu.org/licenses/>.
   */
+
+
+/* NOTE:   Copy your lexan.l lexical analyzer to this directory.      */
+
+       /* To use:
+                     make pars1y              has 1 shift/reduce conflict
+                     pars1y                   execute the parser
+                     i:=j .
+                     ^D                       control-D to end input
+                     pars1y                   execute the parser
+                     begin i:=j; if i+j then x:=a+b*c else x:=a*b+c; k:=i end.
+                     ^D
+                     pars1y                   execute the parser
+                     if x+y then if y+z then i:=j else k:=2.
+                     ^D
+           You may copy pars1.y to be parse.y and extend it for your
+           assignment.  Then use   make parser   as above.
+        */
+
+        /* Yacc reports 1 shift/reduce conflict, due to the ELSE part of
+           the IF statement, but Yacc's default resolves it in the right way.*/
 
 #include <stdio.h>
 #include <ctype.h>
