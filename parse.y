@@ -319,18 +319,18 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 
 void instvars(TOKEN idlist, TOKEN typetok) {
   while(idlist) {
-    SYMBOL symbolCheck = insertsym(idlist->stringval);
-		symbolCheck->kind = VARSYM;
-    int typesSym = typetok->symtype == NULL;
-    symbolCheck->datatype  = typesSym ? searchins(typetok->stringval) : typetok->symtype;	
-    SYMBOL data = symbolCheck->datatype;	
-    symbolCheck->basicdt = data->basicdt;
-		symbolCheck->size = data->size;
-    blockoffs[symbolCheck->blocklevel] +=  (!(symbolCheck->size < 16)) ? blockoffs[symbolCheck->blocklevel] % 16 : 0;
-		symbolCheck->blocklevel = 1;
+    SYMBOL symbolBool = insertsym(idlist->stringval);
+		symbolBool->kind = VARSYM;
+    int symbolType = typetok->symtype == NULL;
+    symbolBool->datatype  = symbolType ? searchins(typetok->stringval) : typetok->symtype;	
+    SYMBOL val = symbolBool->datatype;	
+    symbolBool->basicdt = val->basicdt;
+		symbolBool->size = val->size;
+    blockoffs[symbolBool->blocklevel] +=  (!(symbolBool->size < 16)) ? blockoffs[symbolBool->blocklevel] % 16 : 0;
+		symbolBool->blocklevel = 1;
     int off =  blockoffs[1];
-		symbolCheck->offset = off;
-		blockoffs[1] += symbolCheck->size;
+		symbolBool->offset = off;
+		blockoffs[1] += symbolBool->size;
     idlist = idlist->link;
   }
 }
@@ -338,7 +338,13 @@ void instvars(TOKEN idlist, TOKEN typetok) {
 TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
   int high  = hightok->intval;
   int low = lowtok->intval;
-  return makesubrange(dottok, low, high);
+  SYMBOL subrange = symalloc();
+  subrange->kind = SUBRANGE;
+  subrange->lowbound = low;
+  subrange->highbound = high;
+  subrange -> size = 4;
+  dottok->symtype = subrange;
+  return dottok;
 }
 
 TOKEN instfields(TOKEN idlist, TOKEN typetok) {
@@ -384,7 +390,13 @@ TOKEN instenum(TOKEN idlist) {
   TOKEN input = talloc();
   int left = 0;
   int right = currentVal - 1;
-  return makesubrange(input, 0, right); 
+  SYMBOL subrange = symalloc();
+  subrange->kind = SUBRANGE;
+  subrange->lowbound = 0;
+  subrange->highbound = right;
+  subrange -> size = 4;
+  input->symtype = subrange;
+  return input;
 }
 
 TOKEN instpoint(TOKEN tok, TOKEN typename) {
@@ -421,17 +433,6 @@ void insttype(TOKEN typename, TOKEN typetok) {
   int tokSize = typetok->symtype->size;
   symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : tokSize;
 }
-
-TOKEN makesubrange(TOKEN tok, int low, int high) {
- 	SYMBOL subrange = symalloc();
- 	subrange->kind = SUBRANGE;
-  subrange->lowbound = low;
- 	subrange->highbound = high;
-  subrange -> size = 4;
-  tok->symtype = subrange;
- 	return tok;
-}
-
 
 TOKEN instrec(TOKEN rectok, TOKEN argstok) {
   SYMBOL record = symalloc();
