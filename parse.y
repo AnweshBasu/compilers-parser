@@ -318,18 +318,21 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 }
 
 void instvars(TOKEN idlist, TOKEN typetok) {
-  SYMBOL symbol;
-    while (idlist != NULL) {
-        symbol = insertsym(idlist -> stringval);
-        symbol -> basicdt = idlist -> basicdt;
-        idlist = idlist -> link;
-        symbol -> kind = VARSYM;
-        symbol -> size = searchst(typetok -> stringval) -> size;
-        
-        symbol -> datatype = searchst(typetok -> stringval);
-        symbol -> offset = wordaddress(blockoffs[blocknumber], alignsize(searchst(typetok -> stringval)));
-        blockoffs[blocknumber] = symbol -> size + symbol -> offset;
-    }
+  while(idlist) {
+    SYMBOL symbolCheck = insertsym(idlist->stringval);
+		symbolCheck->kind = VARSYM;
+    int typesSym = typetok->symtype == NULL;
+    symbolCheck->datatype  = typesSym ? searchins(typetok->stringval) : typetok->symtype;	
+    SYMBOL data = symbolCheck->datatype;	
+    symbolCheck->basicdt = data->basicdt;
+		symbolCheck->size = data->size;
+    blockoffs[symbolCheck->blocklevel] +=  (!(symbolCheck->size < 16)) ? blockoffs[symbolCheck->blocklevel] % 16 : 0;
+		symbolCheck->blocklevel = 1;
+    int off =  blockoffs[1];
+		symbolCheck->offset = off;
+		blockoffs[1] += symbolCheck->size;
+    idlist = idlist->link;
+  }
 }
 
 TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
