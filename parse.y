@@ -92,8 +92,8 @@ statement_list:  statement                           { $$ = $1; }
               |  statement_list SEMICOLON statement  { $$ = cons($1, $3); }
               ;
 
-field_list   :  fields                       { $$ = $1; }
-             |  fields SEMICOLON field_list  { $$ = cons($1, $3); }
+arg_list   :  args                       { $$ = $1; }
+             |  args SEMICOLON arg_list  { $$ = cons($1, $3); }
              ;
 lblock       :  LABEL numlist SEMICOLON cblock  { instlabel($2); $$ = $4; }
              |  cblock                       { $$ = $1; }
@@ -167,7 +167,7 @@ numlist       :  NUMBER             { $$ = $1; }
              |  numlist COMMA NUMBER  { $$ = cons($1, $3); }
              ;
 
-fields       :  id_list COLON type  { $$ = instfields($1, $3); }
+args       :  id_list COLON type  { $$ = instargs($1, $3); }
              ;
 simple_type  :  IDENTIFIER                       { $$ = $1; }
              |  LPAREN id_list RPAREN            { $$ = instenum($2); }
@@ -188,7 +188,7 @@ unsigned_constant:  IDENTIFIER | NUMBER | NIL | STRING
               ;
  type      : simple_type  {$$ = $1;}
               |  ARRAY LBRACKET simple_type_list RBRACKET OF type { $$ = instarray($3, $6); }
-             |  RECORD field_list END                   { $$ = instrec($1, $2); }
+             |  RECORD arg_list END                   { $$ = instrec($1, $2); }
              |  POINT IDENTIFIER                        { $$ = instpoint($1, $2); }
              ;
 
@@ -234,49 +234,6 @@ int labels[20];
 
 
 
-TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
-  SYMBOL record =  var->symtype;
-  int initVal = 0;
-  int offsetVal = 0;
- 	if (var->whichval == AREFOP) {     
-     for (int i = 0; i < 3; i++) {
-   	  record =record->datatype;
-     }
- 	} else {
-    SYMBOL ptr = searchst(var->link->stringval);
-    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
-    for (int i = 0; i < 4; i++){
-      recordCheck = recordCheck -> datatype;
-    }
-    record =  recordCheck;
-    unaryop(var, var->link);
- 	}
-  while (record && strcmp(field->stringval, record->namestring)) {
-    if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
-      record->datatype->size = basicsizes[REAL];
-    }
- 		offsetVal += record->datatype->size;
-     record = record -> link;
-  }
-  SYMBOL data_type = searchst(record->datatype->namestring);
-  initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
-
-  TOKEN array = makeop(AREFOP);
- 	if (var->whichval == AREFOP) {
- 		if (var->operands->link->tokentype == NUMBERTOK) {
- 			var->operands->link->intval += offsetVal;
-    }
-    array = var;
-    array->basicdt = initVal;
- 	} else {
-    TOKEN off_tok = makeintc(offsetVal);
- 		array = makearef(var, off_tok, dot);
- 		array->basicdt = initVal;
- 		array->whichval = AREFOP;
- 		array->symtype = record;
- 	}
- 	return array;
-}
 
 TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
  	int idx = labelnumber;
@@ -347,13 +304,13 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
   return dottok;
 }
 
-TOKEN instfields(TOKEN idlist, TOKEN typetok) {
-  TOKEN ret = idlist;
+TOKEN instargs(TOKEN idlist, TOKEN typetok) {
+  TOKEN final = idlist;
   while(idlist) {
     idlist -> symtype = searchins(typetok->stringval);;
     idlist = idlist-> link;
   }
-  return ret;
+  return final;
 }
 
 TOKEN instarray(TOKEN bounds, TOKEN typetok) {
@@ -407,6 +364,50 @@ TOKEN instpoint(TOKEN tok, TOKEN typename) {
   pointer -> basicdt = POINTER;
   tok->symtype = pointer;
   return tok;
+}
+
+TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
+  SYMBOL record =  var->symtype;
+  int initVal = 0;
+  int offsetVal = 0;
+  if (var->whichval == AREFOP) {     
+     for (int i = 0; i < 3; i++) {
+      record =record->datatype;
+     }
+  } else {
+    SYMBOL ptr = searchst(var->link->stringval);
+    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
+    for (int i = 0; i < 4; i++){
+      recordCheck = recordCheck -> datatype;
+    }
+    record =  recordCheck;
+    unaryop(var, var->link);
+  }
+  while (record && strcmp(field->stringval, record->namestring)) {
+    if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
+      record->datatype->size = basicsizes[REAL];
+    }
+    offsetVal += record->datatype->size;
+     record = record -> link;
+  }
+  SYMBOL data_type = searchst(record->datatype->namestring);
+  initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
+
+  TOKEN array = makeop(AREFOP);
+  if (var->whichval == AREFOP) {
+    if (var->operands->link->tokentype == NUMBERTOK) {
+      var->operands->link->intval += offsetVal;
+    }
+    array = var;
+    array->basicdt = initVal;
+  } else {
+    TOKEN off_tok = makeintc(offsetVal);
+    array = makearef(var, off_tok, dot);
+    array->basicdt = initVal;
+    array->whichval = AREFOP;
+    array->symtype = record;
+  }
+  return array;
 }
 
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
