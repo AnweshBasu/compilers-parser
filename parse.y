@@ -479,33 +479,33 @@ void instconst(TOKEN idtok, TOKEN consttok) {
 
 TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
    tok = makeintc(0);
- 	SYMBOL tempVal = searchst(arr->stringval) -> datatype;
- 	SYMBOL recordVal = tempVal->datatype->datatype;
+ 	SYMBOL val = searchst(arr->stringval) -> datatype;
+ 	SYMBOL data = val->datatype->datatype;
  	if (subs->tokentype == NUMBERTOK) {
- 		tokb = makeintc(recordVal->size * (subs->intval - 1));
+ 		tokb = makeintc(data->size * (subs->intval - 1));
  		tok  = makeop(AREFOP);
     unaryop(tok, arr);
     cons(arr, tokb);
- 		tok->symtype = tempVal;
+ 		tok->symtype = val;
  	} else if (subs->tokentype == IDENTIFIERTOK) {
     TOKEN addition = makeop(PLUSOP);
     unaryop(addition, tok);
     cons(arr, addition);
     TOKEN ret = makeop(AREFOP);
     unaryop(ret, arr);
-     int intTok = tempVal->datatype->kind != ARRAYSYM ? tokb->intval = recordVal->size
-      : tempVal->kind == ARRAYSYM ?  tokb->intval = recordVal->datatype->size * (recordVal->datatype->highbound - recordVal->datatype->lowbound + 1) : 0;
+     int intTok = val->datatype->kind != ARRAYSYM ? tokb->intval = data->size
+      : val->kind == ARRAYSYM ?  tokb->intval = data->datatype->size * (data->datatype->highbound - data->datatype->lowbound + 1) : 0;
  		tokb = makeintc(intTok);
-    int tokValues = tempVal->datatype->kind != ARRAYSYM ? -recordVal->size : 
-      tempVal->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
-        -(searchst(subs->link->stringval)->constval.intnum + 1)*recordVal->datatype->size : tok -> intval;
+    int tokValues = val->datatype->kind != ARRAYSYM ? -data->size : 
+      val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
+        -(searchst(subs->link->stringval)->constval.intnum + 1)*data->datatype->size : tok -> intval;
     tok -> intval = tokValues;
-    subs-> link = tempVal->datatype->kind == ARRAYSYM && tempVal->kind == ARRAYSYM ? NULL : subs-> link;
+    subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
     tokb->link = subs;
  		TOKEN multiply = makeop(TIMESOP);
     unaryop(multiply, tokb);
     cons(tok, multiply);
- 		ret->symtype = tempVal;
+ 		ret->symtype = val;
  		return ret;
  	}
  	return tok;
@@ -523,34 +523,34 @@ void symbol_tok(SYMBOL symbolVal, TOKEN tok){
 }
 
 TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
-  int lhsReal = lhs->basicdt == REAL;
-  int rhsInteger =  rhs->basicdt == INTEGER;
-  int lhsInteger = lhs -> basicdt == INTEGER;
-  int rhsReal = rhs ->basicdt == REAL;
+  int lhs = lhs->basicdt == REAL;
+  int rhsNum =  rhs->basicdt == INTEGER;
+  int lhsNum = lhs -> basicdt == INTEGER;
+  int rhs = rhs ->basicdt == REAL;
   int assignCheck = op->whichval == ASSIGNOP;
   if (rhs->whichval == NIL - RESERVED_BIAS && rhs->tokentype == RESERVED) {
 			rhs = makeintc(0);
   }
 	if (rhs->stringval && searchst(rhs->stringval)) {
 		  symbol_tok(searchst(rhs->stringval), rhs);
-      rhsInteger =  rhs->basicdt == INTEGER;
-      rhsReal = rhs ->basicdt == REAL;
+      rhsNum =  rhs->basicdt == INTEGER;
+      rhs = rhs ->basicdt == REAL;
   }
 	if (lhs->stringval && searchst(lhs->stringval)) {
     symbol_tok(searchst(lhs->stringval), lhs);
-      lhsInteger = lhs -> basicdt == INTEGER;
-      lhsReal = lhs->basicdt == REAL;
+      lhsNum = lhs -> basicdt == INTEGER;
+      lhs = lhs->basicdt == REAL;
   }
 
-  op -> basicdt = lhsReal || rhsReal ? REAL : lhsInteger  && rhsInteger ? INTEGER : op -> basicdt;
+  op -> basicdt = lhs || rhs ? REAL : lhsNum  && rhsNum ? INTEGER : op -> basicdt;
 
-	if ( lhsReal && rhsInteger) {
+	if ( lhs && rhsNum) {
     rhs = makefloat(rhs);
   }
-  if (assignCheck && lhsInteger && rhsReal) {
+  if (assignCheck && lhsNum && rhs) {
     rhs = makefix(rhs);
   }
-  if (!assignCheck &&  lhsInteger && rhsReal ) {
+  if (!assignCheck &&  lhsNum && rhs ) {
     lhs  = makefloat(lhs);
   }
   cons(rhs, NULL);
@@ -563,9 +563,9 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
   int idx = labelnumber;
-  int labVal = labeltok -> intval;
+  int label = labeltok -> intval;
   while (idx) {
- 		if (labVal == labels[idx - 1]) {
+ 		if (label == labels[idx - 1]) {
  			TOKEN ret = makegoto(idx - 1);
  			return ret;
  		}
@@ -577,22 +577,22 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr, TOKEN t
   if (!sign) {
     return NULL;
   }
-  TOKEN labelZero = makelabel();
+  TOKEN label = makelabel();
   TOKEN lessThan = makeop(LEOP);
-  TOKEN assignTok =makeop(ASSIGNOP);
-  TOKEN programn = makeprogn(tokc, statement);
+  TOKEN token =makeop(ASSIGNOP);
+  TOKEN pgm = makeprogn(tokc, statement);
   TOKEN begStatement = talloc();
   begStatement->tokentype = IDENTIFIERTOK;
   strcpy(begStatement->stringval, asg->operands->stringval);
   TOKEN if_tok = binop(lessThan, begStatement, endexpr);
-  labelZero->link = makeif(tok, if_tok, programn, NULL);
-  asg->link = labelZero;
-  statement->link = assignTok;
-  asg->link = labelZero;
-  cons(assignTok, makegoto(labelZero->operands->intval));
+  label->link = makeif(tok, if_tok, pgm, NULL);
+  asg->link = label;
+  statement->link = token;
+  asg->link = label;
+  cons(token, makegoto(label->operands->intval));
   TOKEN identificationInit = talloc();
-  unaryop(assignTok, identificationInit);
-  assignTok->operands = identificationInit;
+  unaryop(token, identificationInit);
+  token->operands = identificationInit;
   identificationInit->tokentype = IDENTIFIERTOK;
   identificationInit->link = makeplus(talloc(), makeintc(1), talloc());
   strcpy(identificationInit->stringval, asg->operands->stringval);
