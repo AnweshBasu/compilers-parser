@@ -227,7 +227,11 @@ factor       :         unsigned_constant
 
 %%
 
-int labelnumber = 0;
+int labelnumber = 0;  /* sequential counter for internal label numbers */
+
+   /*  Note: you should add to the above values and insert debugging
+       printouts in your routines similar to those that are shown here.     */
+
 
 int labels[20];
 
@@ -390,16 +394,15 @@ TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
  	return referenceVal;
 }
 
+/* makeprogram makes the tree structures for the top-level program */
 TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
-    TOKEN nameProg = talloc();
-    TOKEN statementProg = talloc();
-    TOKEN prog  = makeop(PROGRAMOP);
-    makeprogn(nameProg, args);
-    unaryop(prog, name);
-    makeprogn(statementProg, statements);
-    cons(nameProg, statementProg);
-    cons(name, nameProg);
-    return prog;
+  TOKEN progNameTok = talloc();
+  TOKEN progTok  = makeop(PROGRAMOP);
+  progTok -> operands = name;
+  progNameTok = makeprogn(progNameTok, args);
+  name -> link = progNameTok;
+  progNameTok -> link = statements;
+  return progTok;  
 }
 
 void instvars(TOKEN idlist, TOKEN typetok) {
