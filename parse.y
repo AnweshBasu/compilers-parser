@@ -232,6 +232,106 @@ int labelnumber = 0;  /* sequential counter for internal label numbers */
 
 int labels[20];
 
+
+
+TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
+  SYMBOL record =  var->symtype;
+  int initVal = 0;
+  int offsetVal = 0;
+ 	if (var->whichval == AREFOP) {     
+     for (int i = 0; i < 3; i++) {
+   	  record =record->datatype;
+     }
+ 	} else {
+    SYMBOL ptr = searchst(var->link->stringval);
+    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
+    for (int i = 0; i < 4; i++){
+      recordCheck = recordCheck -> datatype;
+    }
+    record =  recordCheck;
+    unaryop(var, var->link);
+ 	}
+  while (record && strcmp(field->stringval, record->namestring)) {
+    if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
+      record->datatype->size = basicsizes[REAL];
+    }
+ 		offsetVal += record->datatype->size;
+     record = record -> link;
+  }
+  SYMBOL data_type = searchst(record->datatype->namestring);
+  initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
+
+  TOKEN array = makeop(AREFOP);
+ 	if (var->whichval == AREFOP) {
+ 		if (var->operands->link->tokentype == NUMBERTOK) {
+ 			var->operands->link->intval += offsetVal;
+    }
+    array = var;
+    array->basicdt = initVal;
+ 	} else {
+    TOKEN off_tok = makeintc(offsetVal);
+ 		array = makearef(var, off_tok, dot);
+ 		array->basicdt = initVal;
+ 		array->whichval = AREFOP;
+ 		array->symtype = record;
+ 	}
+ 	return array;
+}
+
+TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
+ 	int idx = labelnumber;
+  tok = makelabel();
+ 	tok->link = statement;
+  TOKEN temp = talloc();
+  labels[labelnumber] = labeltok->intval;
+  while (idx){
+        if (labels[idx] == labeltok->intval) {
+          TOKEN ret = makelabel();
+          ret -> link = statement;
+          ret -> operands = labeltok;//see if make more efficnet
+        } 
+        idx--;
+  }
+   TOKEN ret = makeprogn(temp, tok);
+ 	return ret;
+}
+
+TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
+  var->link = off;
+ 	TOKEN val = tok;
+  val = val != NULL ? val : makeop(AREFOP);
+  unaryop(val, var);
+  val->tokentype = OPERATOR;
+ 	val->whichval = AREFOP;
+ 	return val;
+}
+
+/* makeprogram makes the tree structures for the top-level program */
+TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
+  TOKEN progNameTok = talloc();
+  TOKEN progTok  = makeop(PROGRAMOP);
+  progTok -> operands = name;
+  progNameTok = makeprogn(progNameTok, args);
+  name -> link = progNameTok;
+  progNameTok -> link = statements;
+  return progTok;  
+}
+
+void instvars(TOKEN idlist, TOKEN typetok) {
+  SYMBOL symbol;
+    while (idlist != NULL) {
+        symbol = insertsym(idlist -> stringval);
+        symbol -> basicdt = idlist -> basicdt;
+        idlist = idlist -> link;
+        symbol -> kind = VARSYM;
+        symbol -> size = searchst(typetok -> stringval) -> size;
+        
+        symbol -> datatype = searchst(typetok -> stringval);
+        symbol -> offset = wordaddress(blockoffs[blocknumber], alignsize(searchst(typetok -> stringval)));
+        blockoffs[blocknumber] = symbol -> size + symbol -> offset;
+    }
+}
+
 TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
   int high  = hightok->intval;
   int low = lowtok->intval;
@@ -244,29 +344,29 @@ TOKEN instfields(TOKEN idlist, TOKEN typetok) {
     idlist -> symtype = searchins(typetok->stringval);;
     idlist = idlist-> link;
   }
- 	return ret;
+  return ret;
 }
 
 TOKEN instarray(TOKEN bounds, TOKEN typetok) {
   SYMBOL array = symalloc();
   TOKEN tokArray = talloc();
- 	array->kind = ARRAYSYM;
+  array->kind = ARRAYSYM;
   SYMBOL range = bounds -> symtype;
- 	array->lowbound = range->lowbound;
- 	array->highbound = range->highbound;
+  array->lowbound = range->lowbound;
+  array->highbound = range->highbound;
 
   array->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
- 	if (bounds->link != NULL) {
+  if (bounds->link != NULL) {
     array->datatype = symalloc();
     array->datatype ->highbound = array->highbound;
- 		array->datatype ->lowbound = array->lowbound;
- 		array->datatype ->kind = ARRAYSYM;
+    array->datatype ->lowbound = array->lowbound;
+    array->datatype ->kind = ARRAYSYM;
     array->datatype ->datatype = searchst(typetok->stringval);
   }
   bounds = bounds -> link != NULL ? bounds->link : bounds;
- 	array->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
- 	tokArray->symtype = array;
- 	return tokArray;
+  array->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
+  tokArray->symtype = array;
+  return tokArray;
 }
 
 
@@ -291,19 +391,19 @@ TOKEN instpoint(TOKEN tok, TOKEN typename) {
   pointer -> size = basicsizes[POINTER];
   pointer -> basicdt = POINTER;
   tok->symtype = pointer;
- 	return tok;
+  return tok;
 }
 
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
- 	TOKEN label = makelabel();
+  TOKEN label = makelabel();
   label->link = makeif(tok, expr, statement, NULL);
   int val = labelnumber;
   TOKEN checkVal = statement->operands;
- 	while(checkVal->link){
+  while(checkVal->link){
     checkVal = checkVal->link;
    }
- 	checkVal->link = makegoto(val - 1);
- 	return makeprogn(tokb, label);
+  checkVal->link = makegoto(val - 1);
+  return makeprogn(tokb, label);
 }
 
 void instlabel(TOKEN num) {
@@ -317,107 +417,6 @@ void insttype(TOKEN typename, TOKEN typetok) {
   symbol->datatype = typetok->symtype;
   int tokSize = typetok->symtype->size;
   symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : tokSize;
-}
-
-TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
-  SYMBOL record =  var->symtype;
-  int baseVal = 0;
-  int ofVal = 0;
- 	if (var->whichval == AREFOP) {     
-     for (int i = 0; i < 3; i++) {
-   	  record =record->datatype;
-     }
- 	} else {
-    SYMBOL ptr = searchst(var->link->stringval);
-    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
-    for (int i = 0; i < 4; i++){
-      recordCheck = recordCheck -> datatype;
-    }
-    record =  recordCheck;
-    unaryop(var, var->link);
- 	}
-  while (record && strcmp(field->stringval, record->namestring)) {
-    if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
-      record->datatype->size = basicsizes[REAL];
-    }
- 		ofVal += record->datatype->size;
-     record = record -> link;
-  }
-  SYMBOL data_type = searchst(record->datatype->namestring);
-  baseVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  baseVal;
-
-  TOKEN array = makeop(AREFOP);
- 	if (var->whichval == AREFOP) {
- 		if (var->operands->link->tokentype == NUMBERTOK) {
- 			var->operands->link->intval += ofVal;
-    }
-    array = var;
-    array->basicdt = baseVal;
- 	} else {
-    TOKEN off_tok = makeintc(ofVal);
- 		array = makearef(var, off_tok, dot);
- 		array->basicdt = baseVal;
- 		array->whichval = AREFOP;
- 		array->symtype = record;
- 	}
- 	return array;
-}
-
-TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
- 	int index = labelnumber;
-  tok = makelabel();
- 	tok->link = statement;
-  TOKEN temp = talloc();
-  labels[labelnumber] = labeltok->intval;
-  while (index){
-        if (labels[index] == labeltok->intval) {
-          TOKEN ret = makelabel();
-          ret -> link = statement;
-          ret -> operands = labeltok;//see if make more efficnet
-        } 
-        index--;
-  }
-   TOKEN ret = makeprogn(temp, tok);
- 	return ret;
-}
-
-TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
-  var->link = off;
- 	TOKEN referenceVal = tok;
-  referenceVal = referenceVal != NULL ? referenceVal : makeop(AREFOP);
-  unaryop(referenceVal, var);
-  referenceVal->tokentype = OPERATOR;
- 	referenceVal->whichval = AREFOP;
- 	return referenceVal;
-}
-
-/* makeprogram makes the tree structures for the top-level program */
-TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
-  TOKEN progNameTok = talloc();
-  TOKEN progTok  = makeop(PROGRAMOP);
-  progTok -> operands = name;
-  progNameTok = makeprogn(progNameTok, args);
-  name -> link = progNameTok;
-  progNameTok -> link = statements;
-  return progTok;  
-}
-
-void instvars(TOKEN idlist, TOKEN typetok) {
-  while(idlist) {
-    SYMBOL symbolCheck = insertsym(idlist->stringval);
-		symbolCheck->kind = VARSYM;
-    int typesSym = typetok->symtype == NULL;
-    symbolCheck->datatype  = typesSym ? searchins(typetok->stringval) : typetok->symtype;	
-    SYMBOL data = symbolCheck->datatype;	
-    symbolCheck->basicdt = data->basicdt;
-		symbolCheck->size = data->size;
-    blockoffs[symbolCheck->blocklevel] +=  (!(symbolCheck->size < 16)) ? blockoffs[symbolCheck->blocklevel] % 16 : 0;
-		symbolCheck->blocklevel = 1;
-    int off =  blockoffs[1];
-		symbolCheck->offset = off;
-		blockoffs[1] += symbolCheck->size;
-    idlist = idlist->link;
-  }
 }
 
 TOKEN makesubrange(TOKEN tok, int low, int high) {
@@ -558,14 +557,14 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
-  int index = labelnumber;
+  int idx = labelnumber;
   int labVal = labeltok -> intval;
-  while (index) {
- 		if (labVal == labels[index - 1]) {
- 			TOKEN ret = makegoto(index - 1);
+  while (idx) {
+ 		if (labVal == labels[idx - 1]) {
+ 			TOKEN ret = makegoto(idx - 1);
  			return ret;
  		}
-    index--;
+    idx--;
   }
 }
 
