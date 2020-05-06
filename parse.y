@@ -335,6 +335,17 @@ void instvars(TOKEN idlist, TOKEN typetok) {
   }
 }
 
+TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
+  int high  = hightok->intval;
+  int low = lowtok->intval;
+  SYMBOL subrange = symalloc();
+  subrange->kind = SUBRANGE;
+  subrange->lowbound = low;
+  subrange->highbound = high;
+  subrange -> size = 4;
+  dottok->symtype = subrange;
+  return dottok;
+}
 
 TOKEN instfields(TOKEN idlist, TOKEN typetok) {
   TOKEN ret = idlist;
