@@ -49,11 +49,15 @@
 #include "parse.h"
 #include "pprint.h"
 
+			/* define the type of the Yacc stack element to be TOKEN */
+
 #define YYSTYPE TOKEN
 
 TOKEN parseresult;
 
 %}
+
+/* Order of tokens corresponds to tokendefs.c; do not change */
 
 %token IDENTIFIER STRING NUMBER
 
@@ -87,7 +91,7 @@ assign :variable ASSIGN expression   { $$ = binop($2, $1, $3); }
 cblock       :  CONST cdef_list tblock     { $$ = $3 ;}
              |  tblock
              ;
-funcall    :  IDENTIFIER LPAREN expr_list RPAREN {$$ = makefuncall($2, $1, $3);}
+funcall    :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
 endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
             |  SEMICOLON END
@@ -97,7 +101,7 @@ endpart    :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
   variable     :  IDENTIFIER                            { $$ = $1; }
              |  variable DOT IDENTIFIER               { $$ = reducedot($1, $2, $3); }
              |  variable POINT                        { $$ = cons($2, $1); }
-             |  variable LBRACKET expr_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
+             |  variable LBRACKET expression_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
              ;
   endif      :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
@@ -162,7 +166,7 @@ simple_type  :  IDENTIFIER                       { $$ = $1; }
              |  LPAREN id_list RPAREN            { $$ = instenum($2); }
              |  constant DOTDOT constant { $$ = instdotdot($1, $2, $3); }
              ;
-expr_list  : expression COMMA expr_list  {$$ = cons($1, $3);}
+expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
              | expression  {$$ = cons($1, NULL);}
              ;
 
