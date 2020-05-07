@@ -230,7 +230,7 @@ int labelnumber = 0;  /* sequential counter for internal label numbers */
        printouts in your routines similar to those that are shown here.     */
 
 
-int labels[20];
+int labelList[20];
 
 
 
@@ -240,14 +240,15 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
   tok = makelabel();
  	tok->link = statement;
   TOKEN temp = talloc();
-  labels[labelnumber] = labeltok->intval;
-  while (idx){
-        if (labels[idx] == labeltok->intval) {
-          TOKEN ret = makelabel();
-          ret -> link = statement;
-          ret -> operands = labeltok;//see if make more efficnet
-        } 
-        idx--;
+  labelList[labelnumber] = labeltok->intval;
+  int count = 0;
+  while (count != idx){
+    if (labelList[idx] == labeltok->intval) {
+      TOKEN ret = makelabel();
+      ret -> link = statement;
+      ret -> operands = labeltok;//see if make more efficnet
+    } 
+    count++;
   }
    TOKEN ret = makeprogn(temp, tok);
  	return ret;
@@ -424,7 +425,7 @@ TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
 
 void instlabel(TOKEN num) {
     labelnumber++;
-    labels[labelnumber] = num->intval;
+    labelList[labelnumber] = num->intval;
 }
 
 void insttype(TOKEN typename, TOKEN typetok) {
@@ -565,7 +566,7 @@ TOKEN dogoto(TOKEN tok, TOKEN labeltok){
   int idx = labelnumber;
   int labVal = labeltok -> intval;
   while (idx) {
- 		if (labVal == labels[idx - 1]) {
+ 		if (labVal == labelList[idx - 1]) {
  			TOKEN ret = makegoto(idx - 1);
  			return ret;
  		}
