@@ -272,7 +272,7 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 }
 
 void instvars(TOKEN idlist, TOKEN typetok) {
-  Symbol symbol;
+  SYMBOL symbol;
   while(idlist != NULL) {
     symbol = insertsym(idlist->stringval);
     int symbolType = typetok->symtype == NULL;
