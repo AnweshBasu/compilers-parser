@@ -424,12 +424,11 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
   TOKEN label = makelabel();
   label->link = makeif(tok, expr, statement, NULL);
-  int val = labelnumber;
-  TOKEN checkVal = statement->operands;
-  while(checkVal->link){
-    checkVal = checkVal->link;
-   }
-  checkVal->link = makegoto(val - 1);
+  TOKEN val = statement->operands;
+  while(val->link != NULL){
+    val = val->link;
+  }
+  val->link = makegoto(labelnumber - 1);
   return makeprogn(tokb, label);
 }
 
@@ -443,29 +442,33 @@ void insttype(TOKEN typename, TOKEN typetok) {
   symbol->kind = TYPESYM;
   symbol->datatype = typetok->symtype;
   int length = typetok->symtype->size;
-  symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : length;
+  if (symbol->datatype->kind == RECORDSYM) {
+    symbol -> size = length;
+  } else {
+    symbol -> size = alignsize(symbol -> datatype);
+  }
 }
 
 TOKEN instrec(TOKEN rectok, TOKEN argstok) {
   SYMBOL data = symalloc();
   data->kind = RECORDSYM;
  	data->datatype = makesym(argstok->stringval);
- 	int size = 0;
+ 	int length = 0;
   if ((argstok->symtype != NULL)) {
-    size += argstok->symtype->size;
+    length += argstok->symtype->length;
  		data->datatype->datatype = argstok->symtype;
  	}
    SYMBOL val = data->datatype;
  	while (argstok -> link) {
     argstok = argstok->link;
  		val->link = makesym(argstok->stringval);
-     val = val->link;
-    size += argstok->symtype != NULL ? argstok->symtype->size : 0;
- 		if (argstok->symtype != NULL) {
- 			val->datatype = argstok->symtype;
- 		}
+    val = val->link;
+    if (argstok->symtype != NULL){
+      length +=  argstok->symtype->length;
+      val->datatype = argstok->symtype;
+    } 
  	}
- 	data->size = wordaddress(size, 16);
+ 	data->length = wordaddress(length, 16);
  	rectok->symtype = data;
  	return rectok;
 }
