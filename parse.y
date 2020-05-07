@@ -455,7 +455,7 @@ TOKEN instrec(TOKEN rectok, TOKEN argstok) {
  	data->datatype = makesym(argstok->stringval);
  	int length = 0;
   if ((argstok->symtype != NULL)) {
-    length += argstok->symtype->length;
+    length += argstok->symtype->size;
  		data->datatype->datatype = argstok->symtype;
  	}
    SYMBOL val = data->datatype;
@@ -464,11 +464,11 @@ TOKEN instrec(TOKEN rectok, TOKEN argstok) {
  		val->link = makesym(argstok->stringval);
     val = val->link;
     if (argstok->symtype != NULL){
-      length +=  argstok->symtype->length;
+      length +=  argstok->symtype->size;
       val->datatype = argstok->symtype;
     } 
  	}
- 	data->length = wordaddress(length, 16);
+ 	data->size = wordaddress(length, 16);
  	rectok->symtype = data;
  	return rectok;
 }
