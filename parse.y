@@ -548,8 +548,8 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 			rhs = makeintc(0);
   }
 	if (rhs->stringval && searchst(rhs->stringval)) {
-    rhs->basicdt = rhs->stringval->basicdt;
     SYMBOL sym = searchst(rhs->stringval);
+    rhs->basicdt = sym->basicdt;
     if (sym->kind == CONSTSYM && sym->basicdt == INTEGER ) {
       rhs->tokentype  = NUMBERTOK;
       rhs -> intval = sym->constval.intnum;
@@ -561,8 +561,8 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     rhsFloat = rhs ->basicdt == REAL;
   }
 	if (lhs->stringval && searchst(lhs->stringval)) {
-    lhs->basicdt = lhs->stringval->basicdt;
     SYMBOL sym = searchst(lhs->stringval);
+    lhs->basicdt = sym->basicdt;
     if (sym->kind == CONSTSYM && sym->basicdt == INTEGER ) {
       lhs->tokentype  = NUMBERTOK;
       lhs -> intval = sym->constval.intnum;
