@@ -580,13 +580,24 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   }
 
 	if ( lhsFloat && rhsInt) {
-    rhs = makefloat(rhs);
+    rhs = floatNum(rhs);
   }
   if (assignCheck && lhsInt && rhsFloat) {
     rhs = makefix(rhs);
+    TOKEN temp;
+    if (rhs -> tokentype == NUMBER) {
+      rhs -> intval = rhs -> realval;
+      rhs->basicdt = INTEGER;
+      temp = rhs;
+    } else {
+      TOKEN correct = makeop(FIXOP);
+      unaryop(correct, rhs);
+      temp = correct;
+    }
+    rhs = temp;
   }
   if (!assignCheck &&  lhsInt && rhsFloat ) {
-    lhs  = makefloat(lhs);
+    lhs  = floatNum(lhs);
   }
   cons(rhs, NULL);
   cons(lhs, rhs);
@@ -594,6 +605,16 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   return op;
 }
 
+TOKEN floatNum(TOKEN tok) {
+	if (tok->tokentype == NUMBERTOK) {
+    tok->basicdt = REAL;
+    tok->realval = tok->intval;
+    return tok; 
+    }
+  TOKEN ret = makeop(FLOATOP);
+	ret->operands = tok;
+  return ret;
+}
 
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
@@ -667,16 +688,6 @@ TOKEN makeop(int opnum) {
   return ret;
 }
 
-TOKEN makefloat(TOKEN tok) {
-	if (tok->tokentype == NUMBERTOK) {
-    tok->basicdt = REAL;
-    tok->realval = tok->intval;
-    return tok; 
-    }
-  TOKEN ret = makeop(FLOATOP);
-	ret->operands = tok;
-  return ret;
-}
 
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
@@ -715,20 +726,6 @@ TOKEN makeprogn(TOKEN tok, TOKEN statements) {
   tok->tokentype = OPERATOR;
   tok->operands = statements;
   return tok;
-}
-
-TOKEN makefix(TOKEN tok) {
-  TOKEN ret;
-  if (tok -> tokentype == NUMBER) {
-    tok -> intval = tok -> realval;
-    tok->basicdt = INTEGER;
-    ret = tok;
-  } else {
-    TOKEN correct = makeop(FIXOP);
-    unaryop(correct, tok);
-    ret = correct;
-  }
-  return ret;
 }
 
 
