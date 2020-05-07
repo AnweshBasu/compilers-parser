@@ -298,7 +298,7 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
 
   SYMBOL subrange = symalloc();
   subrange->kind = SUBRANGE;
-  subrange->lowtok->intval;
+  subrange->lowbound = lowtok->intval;
   subrange->highbound = hightok->intval;
   subrange -> size = 4;
   dottok->symtype = subrange;
