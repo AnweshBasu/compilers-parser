@@ -583,7 +583,6 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     rhs = makefloat(rhs);
   }
   if (assignCheck && lhsInt && rhsFloat) {
-    rhs = makefix(rhs);
     TOKEN temp;
     if (rhs -> tokentype == NUMBER) {
       rhs -> intval = rhs -> realval;
