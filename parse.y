@@ -369,41 +369,47 @@ TOKEN instpoint(TOKEN tok, TOKEN typename) {
 }
 
 TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
-  SYMBOL record =  var->symtype;
+  SYMBOL data =  var->symtype;
   int initVal = 0;
-  int offsetVal = 0;
-  if (var->whichval == AREFOP) {     
-     for (int i = 0; i < 3; i++) {
-      record =record->datatype;
-     }
-  } else {
-    SYMBOL ptr = searchst(var->link->stringval);
-    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
-    for (int i = 0; i < 4; i++){
+  int offset = 0;
+  if (var->whichval != AREFOP) {     
+    SYMBOL pointer = searchst(var->link->stringval);
+    SYMBOL recordCheck =  var->link->whichval != AREFOP ? pointer-> datatype : var->link->symtype->datatype;
+    int count = 0;
+    while (count<4) {
       recordCheck = recordCheck -> datatype;
     }
-    record =  recordCheck;
-    unaryop(var, var->link);
+    data =  recordCheck;
+    unaryop(var, var->link);     
+  } else {
+      int count = 0;
+      while (count<3) {
+        count += 1;
+        data =data->datatype;
+      }
   }
-  while (record && strcmp(field->stringval, record->namestring)) {
-    if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
-      record->datatype->size = basicsizes[REAL];
+  while (data != NULL && strcmp(field->stringval, data->namestring)) {
+    if (data->datatype->size == basicsizes[INTEGER && data->link->datatype->size == basicsizes[REAL]]) {
+      data->datatype->size = basicsizes[REAL];
     }
-    offsetVal += record->datatype->size;
-     record = record -> link;
+    offset += data->datatype->size;
+    data = data -> link;
   }
-  SYMBOL data_type = searchst(record->datatype->namestring);
-  initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
+  SYMBOL data_type = searchst(data->datatype->namestring);
+  initVal =data_type &&  !strcmp(field->stringval, data->namestring) ? data_type->basicdt :  initVal;
 
-  TOKEN array = makeop(AREFOP);
+  TOKEN list = makeop(AREFOP);
   if (var->whichval == AREFOP) {
     if (var->operands->link->tokentype == NUMBERTOK) {
-      var->operands->link->intval += offsetVal;
-    }
-    array = var;
-    array->basicdt = initVal;
+      var->operands->link->intval += offset;
+      list = var;
+      list->basicdt = initVal;
+    } else {
+      list = var;
+      list->basicdt = initVal;
+    }    
   } else {
-    TOKEN off = makeintc(offsetVal);
+    TOKEN off = makeintc(offset);
     var->link = off;
     TOKEN val = dot;
     val = val != NULL ? val : makeop(AREFOP);
@@ -411,11 +417,8 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
     val->tokentype = OPERATOR;
     val->whichval = AREFOP;
     return val;
-    array->basicdt = initVal;
-    array->whichval = AREFOP;
-    array->symtype = record;
   }
-  return array;
+  return list;
 }
 
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
