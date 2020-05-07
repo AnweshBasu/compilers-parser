@@ -271,15 +271,15 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
   return progTok;  
 }
 
-void instvars(TOKEN idlist, TOKEN typetok) {
+void instvars(TOKEN idlist, TOKEN tokenRange) {
   SYMBOL symbol;
   while(idlist != NULL) {
     symbol = insertsym(idlist->stringval);
-    int symbolType = typetok->symtype == NULL;
+    int symbolType = tokenRange->symtype == NULL;
     if(symbolType){
-      symbol->datatype = searchins(typetok->stringval);
+      symbol->datatype = searchins(tokenRange->stringval);
     } else {
-      symbol->datatype = typetok->symtype;
+      symbol->datatype = tokenRange->symtype;
     }
 		symbol->kind = VARSYM;
     SYMBOL val = symbol->datatype;	
@@ -305,36 +305,36 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
   return dottok;
 }
 
-TOKEN instfields(TOKEN idlist, TOKEN typetok) {
+TOKEN instfields(TOKEN idlist, TOKEN tokenRange) {
   TOKEN final = idlist;
   while(idlist != NULL) {
-    idlist -> symtype = searchins(typetok->stringval);;
+    idlist -> symtype = searchins(tokenRange->stringval);;
     idlist = idlist-> link;
   }
   return final;
 }
 
-TOKEN instarray(TOKEN bounds, TOKEN typetok) {
+TOKEN instarray(TOKEN range, TOKEN tokenRange) {
   SYMBOL list = symalloc();
   TOKEN tokenList = talloc();
   list->kind = ARRAYSYM;
-  SYMBOL sym = bounds -> symtype;
+  SYMBOL sym = range -> symtype;
   list->lowbound = sym->lowbound;
   list->highbound = sym->highbound;
-  if (bounds->link == NULL) {
-    list->datatype = searchst(typetok->stringval);
+  if (range->link == NULL) {
+    list->datatype = searchst(tokenRange->stringval);
   } else {
     list->datatype = symalloc();
   }
-  if (bounds->link) {
+  if (range->link) {
     list->datatype = symalloc();
     list->datatype ->lowbound = list->lowbound;
     list->datatype ->highbound = list->highbound;
     list->datatype ->kind = ARRAYSYM;
-    list->datatype ->datatype = searchst(typetok->stringval);
+    list->datatype ->datatype = searchst(tokenRange->stringval);
   }
-  bounds = bounds -> link != NULL ? bounds->link : bounds;
-  list->size =  searchst(typetok->stringval)->size * (sym->highbound - sym->lowbound + 1);
+  range = range -> link != NULL ? range->link : range;
+  list->size =  searchst(tokenRange->stringval)->size * (sym->highbound - sym->lowbound + 1);
   tokenList->symtype = list;
   return tokenList;
 }
@@ -437,11 +437,11 @@ void instlabel(TOKEN num) {
     labelList[labelnumber] = num->intval;
 }
 
-void insttype(TOKEN typename, TOKEN typetok) {
+void insttype(TOKEN typename, TOKEN tokenRange) {
   SYMBOL symbol = searchins(typename->stringval);
   symbol->kind = TYPESYM;
-  symbol->datatype = typetok->symtype;
-  int length = typetok->symtype->size;
+  symbol->datatype = tokenRange->symtype;
+  int length = tokenRange->symtype->size;
   symbol -> size = symbol->datatype->kind != RECORDSYM ? alignsize(symbol -> datatype) : length;
 }
 
