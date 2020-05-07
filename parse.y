@@ -226,7 +226,7 @@ factor       :         unsigned_constant
 
 int labelnumber = 0;  /* sequential counter for internal label numbers */
 
-   /*  Note: you should add to the above countues and insert debugging
+   /*  Note: you should add to the above values and insert debugging
        printouts in your routines similar to those that are shown here.     */
 
 
@@ -237,10 +237,10 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
   tok = makelabel();
  	tok->link = statement;
   TOKEN temp = talloc();
-  labelList[labelnumber] = labeltok->intcount;
+  labelList[labelnumber] = labeltok->intval;
   int count = 0;
   while (count != idx){
-    if (labeltok->intcount == labelList[idx]) {
+    if (labeltok->intval == labelList[idx]) {
       TOKEN ret = makelabel();
       ret -> link = statement;
       ret -> operands = labeltok;//see if make more efficnet
@@ -252,12 +252,12 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
 
 TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
   var->link = off;
- 	TOKEN count = tok;
-  count = count != NULL ? count : makeop(AREFOP);
-  unaryop(count, var);
-  count->tokentype = OPERATOR;
- 	count->whichcount = AREFOP;
- 	return count;
+ 	TOKEN val = tok;
+  val = val != NULL ? val : makeop(AREFOP);
+  unaryop(val, var);
+  val->tokentype = OPERATOR;
+ 	val->whichval = AREFOP;
+ 	return val;
 }
 
 /* makeprogram makes the tree structures for the top-level program */
@@ -274,17 +274,17 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 void instvars(TOKEN idlist, TOKEN typetok) {
   SYMBOL symbol;
   while(idlist != NULL) {
-    symbol = insertsym(idlist->stringcount);
+    symbol = insertsym(idlist->stringval);
     int symbolType = typetok->symtype == NULL;
     if(symbolType){
-      symbol->datatype = searchins(typetok->stringcount);
+      symbol->datatype = searchins(typetok->stringval);
     } else {
       symbol->datatype = typetok->symtype;
     }
 		symbol->kind = VARSYM;
-    SYMBOL count = symbol->datatype;	
-    symbol->basicdt = count->basicdt;
-		symbol->size = count->size;
+    SYMBOL val = symbol->datatype;	
+    symbol->basicdt = val->basicdt;
+		symbol->size = val->size;
     blockoffs[symbol->blocklevel] +=  (!(symbol->size < 16)) ? blockoffs[symbol->blocklevel] % 16 : 0;
 		symbol->blocklevel = 1;
     int off =  blockoffs[1];
@@ -298,8 +298,8 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
 
   SYMBOL subrange = symalloc();
   subrange->kind = SUBRANGE;
-  subrange->lowbound = lowtok->intcount;
-  subrange->highbound = hightok->intcount;
+  subrange->lowbound = lowtok->intval;
+  subrange->highbound = hightok->intval;
   subrange -> size = 4;
   dottok->symtype = subrange;
   return dottok;
@@ -308,7 +308,7 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
 TOKEN instfields(TOKEN idlist, TOKEN typetok) {
   TOKEN final = idlist;
   while(idlist != NULL) {
-    idlist -> symtype = searchins(typetok->stringcount);;
+    idlist -> symtype = searchins(typetok->stringval);;
     idlist = idlist-> link;
   }
   return final;
@@ -322,7 +322,7 @@ TOKEN instarray(TOKEN bounds, TOKEN typetok) {
   list->lowbound = sym->lowbound;
   list->highbound = sym->highbound;
   if (bounds->link == NULL) {
-    list->datatype = searchst(typetok->stringcount);
+    list->datatype = searchst(typetok->stringval);
   } else {
     list->datatype = symalloc();
   }
@@ -331,10 +331,10 @@ TOKEN instarray(TOKEN bounds, TOKEN typetok) {
     list->datatype ->lowbound = list->lowbound;
     list->datatype ->highbound = list->highbound;
     list->datatype ->kind = ARRAYSYM;
-    list->datatype ->datatype = searchst(typetok->stringcount);
+    list->datatype ->datatype = searchst(typetok->stringval);
   }
   bounds = bounds -> link != NULL ? bounds->link : bounds;
-  list->size =  searchst(typetok->stringcount)->size * (sym->highbound - sym->lowbound + 1);
+  list->size =  searchst(typetok->stringval)->size * (sym->highbound - sym->lowbound + 1);
   tokenList->symtype = list;
   return tokenList;
 }
@@ -342,7 +342,7 @@ TOKEN instarray(TOKEN bounds, TOKEN typetok) {
 
 TOKEN instenum(TOKEN idlist) {
   int count = 0;
-  while(idlist != NULLL) {
+  while(idlist != NULL) {
     TOKEN constVal = makeintc(count);
     count++;
     instconst(idlist, constVal);
@@ -352,7 +352,7 @@ TOKEN instenum(TOKEN idlist) {
   SYMBOL subrange = symalloc();
   subrange->kind = SUBRANGE;
   subrange->lowbound = 0;
-  subrange->highbound = count - 1;;
+  subrange->highbound = count - 1;
   subrange -> size = 4;
   input->symtype = subrange;
   return input;
@@ -361,7 +361,7 @@ TOKEN instenum(TOKEN idlist) {
 TOKEN instpoint(TOKEN tok, TOKEN typename) {
   SYMBOL ptr = symalloc();
   ptr->kind = POINTERSYM;
-  ptr->datatype = searchins(typename->stringcount);
+  ptr->datatype = searchins(typename->stringval);
   ptr -> size = basicsizes[POINTER];
   ptr -> basicdt = POINTER;
   tok->symtype = ptr;
@@ -372,20 +372,20 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
   SYMBOL record =  var->symtype;
   int initVal = 0;
   int offsetVal = 0;
-  if (var->whichcount == AREFOP) {     
+  if (var->whichval == AREFOP) {     
      for (int i = 0; i < 3; i++) {
       record =record->datatype;
      }
   } else {
-    SYMBOL ptr = searchst(var->link->stringcount);
-    SYMBOL recordCheck =  var->link->whichcount != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
+    SYMBOL ptr = searchst(var->link->stringval);
+    SYMBOL recordCheck =  var->link->whichval != AREFOP ? ptr-> datatype : var->link->symtype->datatype;
     for (int i = 0; i < 4; i++){
       recordCheck = recordCheck -> datatype;
     }
     record =  recordCheck;
     unaryop(var, var->link);
   }
-  while (record && strcmp(field->stringcount, record->namestring)) {
+  while (record && strcmp(field->stringval, record->namestring)) {
     if (record->datatype->size == basicsizes[INTEGER && record->link->datatype->size == basicsizes[REAL]]) {
       record->datatype->size = basicsizes[REAL];
     }
@@ -393,26 +393,26 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
      record = record -> link;
   }
   SYMBOL data_type = searchst(record->datatype->namestring);
-  initVal =data_type &&  !strcmp(field->stringcount, record->namestring) ? data_type->basicdt :  initVal;
+  initVal =data_type &&  !strcmp(field->stringval, record->namestring) ? data_type->basicdt :  initVal;
 
   TOKEN array = makeop(AREFOP);
-  if (var->whichcount == AREFOP) {
+  if (var->whichval == AREFOP) {
     if (var->operands->link->tokentype == NUMBERTOK) {
-      var->operands->link->intcount += offsetVal;
+      var->operands->link->intval += offsetVal;
     }
     array = var;
     array->basicdt = initVal;
   } else {
     TOKEN off = makeintc(offsetVal);
     var->link = off;
-    TOKEN count = dot;
-    count = count != NULL ? count : makeop(AREFOP);
-    unaryop(count, var);
-    count->tokentype = OPERATOR;
-    count->whichcount = AREFOP;
-    return count;
+    TOKEN val = dot;
+    val = val != NULL ? val : makeop(AREFOP);
+    unaryop(val, var);
+    val->tokentype = OPERATOR;
+    val->whichval = AREFOP;
+    return val;
     array->basicdt = initVal;
-    array->whichcount = AREFOP;
+    array->whichval = AREFOP;
     array->symtype = record;
   }
   return array;
@@ -421,22 +421,22 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
 TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
   TOKEN label = makelabel();
   label->link = makeif(tok, expr, statement, NULL);
-  int count = labelnumber;
+  int val = labelnumber;
   TOKEN checkVal = statement->operands;
   while(checkVal->link){
     checkVal = checkVal->link;
    }
-  checkVal->link = makegoto(count - 1);
+  checkVal->link = makegoto(val - 1);
   return makeprogn(tokb, label);
 }
 
 void instlabel(TOKEN num) {
     labelnumber++;
-    labelList[labelnumber] = num->intcount;
+    labelList[labelnumber] = num->intval;
 }
 
 void insttype(TOKEN typename, TOKEN typetok) {
-  SYMBOL symbol = searchins(typename->stringcount);
+  SYMBOL symbol = searchins(typename->stringval);
   symbol->kind = TYPESYM;
   symbol->datatype = typetok->symtype;
   int length = typetok->symtype->size;
@@ -446,20 +446,20 @@ void insttype(TOKEN typename, TOKEN typetok) {
 TOKEN instrec(TOKEN rectok, TOKEN argstok) {
   SYMBOL data = symalloc();
   data->kind = RECORDSYM;
- 	data->datatype = makesym(argstok->stringcount);
+ 	data->datatype = makesym(argstok->stringval);
  	int size = 0;
   if ((argstok->symtype != NULL)) {
     size += argstok->symtype->size;
  		data->datatype->datatype = argstok->symtype;
  	}
-   SYMBOL count = data->datatype;
+   SYMBOL val = data->datatype;
  	while (argstok -> link) {
     argstok = argstok->link;
- 		count->link = makesym(argstok->stringcount);
-     count = count->link;
+ 		val->link = makesym(argstok->stringval);
+     val = val->link;
     size += argstok->symtype != NULL ? argstok->symtype->size : 0;
  		if (argstok->symtype != NULL) {
- 			count->datatype = argstok->symtype;
+ 			val->datatype = argstok->symtype;
  		}
  	}
  	data->size = wordaddress(size, 16);
@@ -468,52 +468,52 @@ TOKEN instrec(TOKEN rectok, TOKEN argstok) {
 }
 
 void instconst(TOKEN idtok, TOKEN consttok) {
-	  SYMBOL symbolVal = insertsym(idtok->stringcount);
+	  SYMBOL symbolVal = insertsym(idtok->stringval);
   	symbolVal->basicdt = consttok->basicdt;
 	  symbolVal->kind = CONSTSYM;
     int c = consttok->basicdt;
     switch(c) {
       case INTEGER:
-        symbolVal->constcount.intnum = consttok->intcount;
+        symbolVal->constval.intnum = consttok->intval;
         break;
       case STRINGTYPE:
-        strncpy(symbolVal->constcount.stringconst, consttok->stringcount, 16);
+        strncpy(symbolVal->constval.stringconst, consttok->stringval, 16);
         break;
       case REAL:
-        symbolVal->constcount.realnum = consttok->realcount;
+        symbolVal->constval.realnum = consttok->realval;
         break;
     }
 }
 
 TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
    tok = makeintc(0);
- 	SYMBOL count = searchst(arr->stringcount) -> datatype;
- 	SYMBOL data = count->datatype->datatype;
+ 	SYMBOL val = searchst(arr->stringval) -> datatype;
+ 	SYMBOL data = val->datatype->datatype;
  	if (subs->tokentype == NUMBERTOK) {
- 		tokb = makeintc(data->size * (subs->intcount - 1));
+ 		tokb = makeintc(data->size * (subs->intval - 1));
  		tok  = makeop(AREFOP);
     unaryop(tok, arr);
     cons(arr, tokb);
- 		tok->symtype = count;
+ 		tok->symtype = val;
  	} else if (subs->tokentype == IDENTIFIERTOK) {
     TOKEN addition = makeop(PLUSOP);
     unaryop(addition, tok);
     cons(arr, addition);
     TOKEN ret = makeop(AREFOP);
     unaryop(ret, arr);
-     int intTok = count->datatype->kind != ARRAYSYM ? tokb->intcount = data->size
-      : count->kind == ARRAYSYM ?  tokb->intcount = data->datatype->size * (data->datatype->highbound - data->datatype->lowbound + 1) : 0;
+     int intTok = val->datatype->kind != ARRAYSYM ? tokb->intval = data->size
+      : val->kind == ARRAYSYM ?  tokb->intval = data->datatype->size * (data->datatype->highbound - data->datatype->lowbound + 1) : 0;
  		tokb = makeintc(intTok);
-    int tokValues = count->datatype->kind != ARRAYSYM ? -data->size : 
-      count->kind == ARRAYSYM && searchst(subs->link->stringcount)->kind == CONSTSYM ? 
-        -(searchst(subs->link->stringcount)->constcount.intnum + 1)*data->datatype->size : tok -> intcount;
-    tok -> intcount = tokValues;
-    subs-> link = count->datatype->kind == ARRAYSYM && count->kind == ARRAYSYM ? NULL : subs-> link;
+    int tokValues = val->datatype->kind != ARRAYSYM ? -data->size : 
+      val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
+        -(searchst(subs->link->stringval)->constval.intnum + 1)*data->datatype->size : tok -> intval;
+    tok -> intval = tokValues;
+    subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
     tokb->link = subs;
  		TOKEN multiply = makeop(TIMESOP);
     unaryop(multiply, tokb);
     cons(tok, multiply);
- 		ret->symtype = count;
+ 		ret->symtype = val;
  		return ret;
  	}
  	return tok;
@@ -523,10 +523,10 @@ void symbol_tok(SYMBOL symbolVal, TOKEN tok){
 	tok->basicdt = symbolVal->basicdt;
   if (symbolVal->kind == CONSTSYM && symbolVal->basicdt == INTEGER ) {
     tok->tokentype  = NUMBERTOK;
-    tok -> intcount = symbolVal->constcount.intnum;
+    tok -> intval = symbolVal->constval.intnum;
   } else if (symbolVal->kind == CONSTSYM && symbolVal->basicdt == REAL) {
     tok->tokentype  = NUMBERTOK;
-    tok -> realcount = symbolVal->constcount.realnum;
+    tok -> realval = symbolVal->constval.realnum;
   }
 }
 
@@ -535,17 +535,17 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   int rhsInt =  rhs->basicdt == INTEGER;
   int lhsInt = lhs -> basicdt == INTEGER;
   int rhsFloat = rhs ->basicdt == REAL;
-  int assignCheck = op->whichcount == ASSIGNOP;
-  if (rhs->whichcount == NIL - RESERVED_BIAS && rhs->tokentype == RESERVED) {
+  int assignCheck = op->whichval == ASSIGNOP;
+  if (rhs->whichval == NIL - RESERVED_BIAS && rhs->tokentype == RESERVED) {
 			rhs = makeintc(0);
   }
-	if (rhs->stringcount && searchst(rhs->stringcount)) {
-		  symbol_tok(searchst(rhs->stringcount), rhs);
+	if (rhs->stringval && searchst(rhs->stringval)) {
+		  symbol_tok(searchst(rhs->stringval), rhs);
       rhsInt =  rhs->basicdt == INTEGER;
       rhsFloat = rhs ->basicdt == REAL;
   }
-	if (lhs->stringcount && searchst(lhs->stringcount)) {
-    symbol_tok(searchst(lhs->stringcount), lhs);
+	if (lhs->stringval && searchst(lhs->stringval)) {
+    symbol_tok(searchst(lhs->stringval), lhs);
       lhsInt = lhs -> basicdt == INTEGER;
       lhsFloat = lhs->basicdt == REAL;
   }
@@ -571,7 +571,7 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
   int idx = labelnumber;
-  int labVal = labeltok -> intcount;
+  int labVal = labeltok -> intval;
   while (idx) {
  		if (labVal == labelList[idx - 1]) {
  			TOKEN ret = makegoto(idx - 1);
@@ -591,21 +591,21 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr, TOKEN t
   TOKEN programn = makeprogn(tokc, statement);
   TOKEN begStatement = talloc();
   begStatement->tokentype = IDENTIFIERTOK;
-  strcpy(begStatement->stringcount, asg->operands->stringcount);
+  strcpy(begStatement->stringval, asg->operands->stringval);
   TOKEN if_tok = binop(lessThan, begStatement, endexpr);
   labelZero->link = makeif(tok, if_tok, programn, NULL);
   asg->link = labelZero;
   statement->link = assignTok;
   asg->link = labelZero;
-  cons(assignTok, makegoto(labelZero->operands->intcount));
+  cons(assignTok, makegoto(labelZero->operands->intval));
   TOKEN identificationInit = talloc();
   unaryop(assignTok, identificationInit);
   assignTok->operands = identificationInit;
   identificationInit->tokentype = IDENTIFIERTOK;
   identificationInit->link = makeplus(talloc(), makeintc(1), talloc());
-  strcpy(identificationInit->stringcount, asg->operands->stringcount);
+  strcpy(identificationInit->stringval, asg->operands->stringval);
   identificationInit->link->operands->tokentype = IDENTIFIERTOK;
-  strcpy(identificationInit->link->operands->stringcount, asg->operands->stringcount);
+  strcpy(identificationInit->link->operands->stringval, asg->operands->stringval);
   return makeprogn(tokb, asg);
 }
 
@@ -621,7 +621,7 @@ TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
 TOKEN makeintc(int num) {
   TOKEN number = talloc();
   number -> tokentype = NUMBERTOK;
-  number -> intcount = num;
+  number -> intval = num;
   number -> basicdt = INTEGER;
   return number;
 }
@@ -636,14 +636,14 @@ TOKEN makelabel() {
 TOKEN makeop(int opnum) {
   TOKEN ret = talloc();
   ret->tokentype = OPERATOR;
-  ret->whichcount = opnum;
+  ret->whichval = opnum;
   return ret;
 }
 
 TOKEN makefloat(TOKEN tok) {
 	if (tok->tokentype == NUMBERTOK) {
     tok->basicdt = REAL;
-    tok->realcount = tok->intcount;
+    tok->realval = tok->intval;
     return tok; 
     }
   TOKEN ret = makeop(FLOATOP);
@@ -653,7 +653,7 @@ TOKEN makefloat(TOKEN tok) {
 
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
-  gotoTok -> whichcount = GOTOOP;
+  gotoTok -> whichval = GOTOOP;
   gotoTok -> operands = makeintc(label);
   gotoTok -> tokentype = OPERATOR;
   return gotoTok;
@@ -673,7 +673,7 @@ TOKEN cons(TOKEN item, TOKEN list) {
 
 TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart) {
   tok->tokentype = OPERATOR;
-  tok->whichcount = IFOP;
+  tok->whichval = IFOP;
   exp->link = thenpart;
   tok->operands = exp;
   if (elsepart != NULL) {
@@ -684,7 +684,7 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart) {
 }
 
 TOKEN makeprogn(TOKEN tok, TOKEN statements) {
-  tok->whichcount = PROGNOP;
+  tok->whichval = PROGNOP;
   tok->tokentype = OPERATOR;
   tok->operands = statements;
   return tok;
@@ -693,7 +693,7 @@ TOKEN makeprogn(TOKEN tok, TOKEN statements) {
 TOKEN makefix(TOKEN tok) {
   TOKEN ret;
   if (tok -> tokentype == NUMBER) {
-    tok -> intcount = tok -> realcount;
+    tok -> intval = tok -> realval;
     tok->basicdt = INTEGER;
     ret = tok;
   } else {
@@ -711,14 +711,14 @@ TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) {
   tokFunc -> operands -> link = args;
   tok = makeop(ASSIGNOP);
 
-	if (strcmp(fn->stringcount, "new")) {
-    SYMBOL funStr = searchins(fn->stringcount);
+	if (strcmp(fn->stringval, "new")) {
+    SYMBOL funStr = searchins(fn->stringval);
     cons (fn, args);
     tokFunc->basicdt = funStr->datatype->basicdt;
     tokFunc->operands = fn;
     return tokFunc;
 	} 
-  SYMBOL argVal = searchst(args->stringcount);
+  SYMBOL argVal = searchst(args->stringval);
   SYMBOL temp = argVal;
   for (int currentData = 0; currentData < 3; currentData++) {
     temp = temp -> datatype;
