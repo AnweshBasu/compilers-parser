@@ -232,9 +232,6 @@ int labelnumber = 0;  /* sequential counter for internal label numbers */
 
 int labelList[40];
 
-
-
-
 TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
  	int idx = labelnumber;
   tok = makelabel();
@@ -243,15 +240,14 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
   labelList[labelnumber] = labeltok->intval;
   int count = 0;
   while (count != idx){
-    if (labelList[idx] == labeltok->intval) {
+    if (labeltok->intval == labelList[idx]) {
       TOKEN ret = makelabel();
       ret -> link = statement;
       ret -> operands = labeltok;//see if make more efficnet
     } 
     count++;
   }
-   TOKEN ret = makeprogn(temp, tok);
- 	return ret;
+ 	return makeprogn(temp, tok);
 }
 
 TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
@@ -620,10 +616,10 @@ TOKEN makeintc(int num) {
 }
 
 TOKEN makelabel() {
-  TOKEN ret = makeop(LABELOP);
-  ret -> operands = makeintc(labelnumber);
+  TOKEN labelTok = makeop(LABELOP);
+  labelTok -> operands = makeintc(labelnumber);
   labelnumber++;
-  return ret;
+  return labelTok;
 }
 
 TOKEN makeop(int opnum) {
