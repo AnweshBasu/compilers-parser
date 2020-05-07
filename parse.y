@@ -202,7 +202,7 @@ vblock       :  VAR vdef_list vblock        { $$ = $3; }
              ;
 
   
-term         :  term multiply factor           { $$ = binop($2, $1, $3); }
+term         :  term prod factor           { $$ = binop($2, $1, $3); }
              |  factor
              ;
 
@@ -210,7 +210,7 @@ tdef_list      :  tdef SEMICOLON          { $$ = $1; }
              |  tdef_list tdef SEMICOLON
              ;
 
-multiply     :  TIMES | DIVIDE | DIV | MOD | AND
+prod     :  TIMES | DIVIDE | DIV | MOD | AND
              ;
   
 
@@ -505,14 +505,14 @@ TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
     tok -> intval = value;
     subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
     tokb->link = subs;
-    TOKEN multiply = makeop(TIMESOP);
-    unaryop(multiply, tokb);
-    cons(tok, multiply);
+    TOKEN prod = makeop(TIMESOP);
+    unaryop(prod, tokb);
+    cons(tok, prod);
     final->symtype = val;
     return final;
  	} else if (subs->tokentype == NUMBERTOK) {
-    tokb = makeintc(data->size * (subs->intval - 1));
     tok  = makeop(AREFOP);
+    tokb = makeintc(data->size * (subs->intval - 1));
     unaryop(tok, arr);
     cons(arr, tokb);
     tok->symtype = val;
@@ -521,31 +521,20 @@ TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
 }
 
 void instconst(TOKEN idtok, TOKEN consttok) {
-	  SYMBOL symbolVal = insertsym(idtok->stringval);
-  	symbolVal->basicdt = consttok->basicdt;
-	  symbolVal->kind = CONSTSYM;
-    int c = consttok->basicdt;
-    switch(c) {
-      case INTEGER:
-        symbolVal->constval.intnum = consttok->intval;
-        break;
-      case STRINGTYPE:
-        strncpy(symbolVal->constval.stringconst, consttok->stringval, 16);
-        break;
-      case REAL:
-        symbolVal->constval.realnum = consttok->realval;
-        break;
-    }
-}
-
-void symbol_tok(SYMBOL symbolVal, TOKEN tok){
-	tok->basicdt = symbolVal->basicdt;
-  if (symbolVal->kind == CONSTSYM && symbolVal->basicdt == INTEGER ) {
-    tok->tokentype  = NUMBERTOK;
-    tok -> intval = symbolVal->constval.intnum;
-  } else if (symbolVal->kind == CONSTSYM && symbolVal->basicdt == REAL) {
-    tok->tokentype  = NUMBERTOK;
-    tok -> realval = symbolVal->constval.realnum;
+  SYMBOL symbolVal = insertsym(idtok->stringval);
+	symbolVal->basicdt = consttok->basicdt;
+  symbolVal->kind = CONSTSYM;
+  int c = consttok->basicdt;
+  switch(c) {
+    case INTEGER:
+      symbolVal->constval.intnum = consttok->intval;
+      break;
+    case STRINGTYPE:
+      strncpy(symbolVal->constval.stringconst, consttok->stringval, 16);
+      break;
+    case REAL:
+      symbolVal->constval.realnum = consttok->realval;
+      break;
   }
 }
 
@@ -559,14 +548,28 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 			rhs = makeintc(0);
   }
 	if (rhs->stringval && searchst(rhs->stringval)) {
-		  symbol_tok(searchst(rhs->stringval), rhs);
-      rhsInt =  rhs->basicdt == INTEGER;
-      rhsFloat = rhs ->basicdt == REAL;
+    rhs->basicdt = rhs-<stringval->basicdt;
+    if (rhs-<stringval->kind == CONSTSYM && rhs-<stringval->basicdt == INTEGER ) {
+      rhs->tokentype  = NUMBERTOK;
+      rhs -> intval = rhs-<stringval->constval.intnum;
+    } else if (rhs-<stringval->kind == CONSTSYM && rhs-<stringval->basicdt == REAL) {
+      rhs->tokentype  = NUMBERTOK;
+      rhs -> realval = rhs-<stringval->constval.realnum;
+    }
+    rhsInt =  rhs->basicdt == INTEGER;
+    rhsFloat = rhs ->basicdt == REAL;
   }
 	if (lhs->stringval && searchst(lhs->stringval)) {
-    symbol_tok(searchst(lhs->stringval), lhs);
-      lhsInt = lhs -> basicdt == INTEGER;
-      lhsFloat = lhs->basicdt == REAL;
+    lhs->basicdt = lhs-<stringval->basicdt;
+    if (lhs-<stringval->kind == CONSTSYM && lhs-<stringval->basicdt == INTEGER ) {
+      lhs->tokentype  = NUMBERTOK;
+      lhs -> intval = lhs-<stringval->constval.intnum;
+    } else if (lhs-<stringval->kind == CONSTSYM && lhs-<stringval->basicdt == REAL) {
+      lhs->tokentype  = NUMBERTOK;
+      lhs -> realval = lhs-<stringval->constval.realnum;
+    }
+    lhsInt = lhs -> basicdt == INTEGER;
+    lhsFloat = lhs->basicdt == REAL;
   }
 
   op -> basicdt = lhsFloat || rhsFloat ? REAL : lhsInt  && rhsInt ? INTEGER : op -> basicdt;
