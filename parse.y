@@ -630,29 +630,32 @@ TOKEN dogoto(TOKEN tok, TOKEN labeltok){
 }
 
 TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr, TOKEN tokc, TOKEN statement) {
-  TOKEN label = makelabel();
-  TOKEN ident1 = talloc();
-  TOKEN incr1 = talloc();
-  TOKEN incr = makeop(PLUSOP);
-  TOKEN incr2 = talloc();
-  TOKEN ident2 = makeop(ASSIGNOP);
-  
-  asg -> link = label;
-  ident1 -> tokentype = IDENTIFIERTOK;
-  strcpy(ident1 -> stringval, asg ->operands -> stringval);
-  label -> link = makeif(tok, binop(makeop(LEOP), ident1, endexpr), statement, NULL);
-  incr1 -> tokentype = IDENTIFIERTOK;
-  strcpy(incr1 -> stringval, ident1 -> stringval);
-  incr->operands = incr1;
-  incr1->link = makeintc(1);  
-  incr2 -> tokentype = IDENTIFIERTOK;
-  strcpy(incr2 -> stringval, ident1 -> stringval);
-  incr2 -> link = incr;
-  ident2 -> operands = incr2;
-  statement -> operands -> link = ident2;
-  ident2 -> link = makegoto(label -> operands -> intval);
-  
-  return makeprogn(tokb, asg);
+  if (sign) {
+    TOKEN label = makelabel();
+    TOKEN lessThan = makeop(LEOP);
+    TOKEN assignTok =makeop(ASSIGNOP);
+    TOKEN start = talloc();
+    
+    start->tokentype = IDENTIFIERTOK;
+    strcpy(start->stringval, asg->operands->stringval);
+    TOKEN if_tok = binop(lessThan, start, endexpr);
+    label->link = makeif(tok, if_tok, makeprogn(tokc, statement), NULL);
+    asg->link = label;
+    statement->link = assignTok;
+    asg->link = label;
+    cons(assignTok, makegoto(label->operands->intval));
+    TOKEN identificationInit = talloc();
+    unaryop(assignTok, identificationInit);
+    assignTok->operands = identificationInit;
+    identificationInit->tokentype = IDENTIFIERTOK;
+    identificationInit->link = makeplus(talloc(), makeintc(1), talloc());
+    strcpy(identificationInit->stringval, asg->operands->stringval);
+    identificationInit->link->operands->tokentype = IDENTIFIERTOK;
+    strcpy(identificationInit->link->operands->stringval, asg->operands->stringval);
+    return makeprogn(tokb, asg);
+  } else {
+    return NULL;
+  }
 }
 
 
