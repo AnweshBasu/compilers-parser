@@ -295,12 +295,11 @@ void instvars(TOKEN idlist, TOKEN typetok) {
 }
 
 TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
-  int high  = hightok->intval;
-  int low = lowtok->intval;
+
   SYMBOL subrange = symalloc();
   subrange->kind = SUBRANGE;
-  subrange->lowbound = low;
-  subrange->highbound = high;
+  subrange->lowtok->intval;
+  subrange->highbound = hightok->intval;
   subrange -> size = 4;
   dottok->symtype = subrange;
   return dottok;
@@ -308,7 +307,7 @@ TOKEN instdotdot(TOKEN lowtok, TOKEN dottok, TOKEN hightok) {
 
 TOKEN instfields(TOKEN idlist, TOKEN typetok) {
   TOKEN final = idlist;
-  while(idlist) {
+  while(idlist != NULL) {
     idlist -> symtype = searchins(typetok->stringval);;
     idlist = idlist-> link;
   }
@@ -317,24 +316,27 @@ TOKEN instfields(TOKEN idlist, TOKEN typetok) {
 
 TOKEN instarray(TOKEN bounds, TOKEN typetok) {
   SYMBOL list = symalloc();
-  TOKEN tokArray = talloc();
+  TOKEN tokenList = talloc();
   list->kind = ARRAYSYM;
-  SYMBOL range = bounds -> symtype;
-  list->lowbound = range->lowbound;
-  list->highbound = range->highbound;
-
-  list->datatype = bounds->link == NULL ? searchst(typetok->stringval) :symalloc();
-  if (bounds->link != NULL) {
+  SYMBOL sym = bounds -> symtype;
+  list->lowbound = sym->lowbound;
+  list->highbound = sym->highbound;
+  if (bounds->link == NULL) {
+    list->datatype = searchst(typetok->stringval);
+  } else {
     list->datatype = symalloc();
-    list->datatype ->highbound = list->highbound;
+  }
+  if (bounds->link) {
+    list->datatype = symalloc();
     list->datatype ->lowbound = list->lowbound;
+    list->datatype ->highbound = list->highbound;
     list->datatype ->kind = ARRAYSYM;
     list->datatype ->datatype = searchst(typetok->stringval);
   }
   bounds = bounds -> link != NULL ? bounds->link : bounds;
-  list->size =  searchst(typetok->stringval)->size * (range->highbound - range->lowbound + 1);
-  tokArray->symtype = list;
-  return tokArray;
+  list->size =  searchst(typetok->stringval)->size * (sym->highbound - sym->lowbound + 1);
+  tokenList->symtype = list;
+  return tokenList;
 }
 
 
