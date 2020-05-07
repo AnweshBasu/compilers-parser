@@ -477,7 +477,7 @@ TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
   tok = makeintc(0);
  	SYMBOL val = searchst(arr->stringval) -> datatype;
  	SYMBOL data = val->datatype->datatype;
- 	if (subs->tokentype == IDENTIFIERTOKsubs->tokentype == NUMBERTOK) {
+ 	if (subs->tokentype == IDENTIFIERTOK) {
  		TOKEN sum = makeop(PLUSOP);
     unaryop(sum, tok); cons(arr, sum);
     TOKEN final = makeop(AREFOP);
