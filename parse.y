@@ -549,24 +549,26 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   }
 	if (rhs->stringval && searchst(rhs->stringval)) {
     rhs->basicdt = rhs->stringval->basicdt;
-    if (rhs->stringval->kind == CONSTSYM && rhs->stringval->basicdt == INTEGER ) {
+    SYMBOL sym = searchst(rhs->stringval);
+    if (sym->kind == CONSTSYM && sym->basicdt == INTEGER ) {
       rhs->tokentype  = NUMBERTOK;
-      rhs -> intval = rhs->stringval->constval.intnum;
-    } else if (rhs->stringval->kind == CONSTSYM && rhs->stringval->basicdt == REAL) {
+      rhs -> intval = sym->constval.intnum;
+    } else if (sym->kind == CONSTSYM && sym->basicdt == REAL) {
       rhs->tokentype  = NUMBERTOK;
-      rhs -> realval = rhs->stringval->constval.realnum;
+      rhs -> realval = sym->constval.realnum;
     }
     rhsInt =  rhs->basicdt == INTEGER;
     rhsFloat = rhs ->basicdt == REAL;
   }
 	if (lhs->stringval && searchst(lhs->stringval)) {
     lhs->basicdt = lhs->stringval->basicdt;
-    if (lhs->stringval->kind == CONSTSYM && lhs->stringval->basicdt == INTEGER ) {
+    SYMBOL sym = searchst(lhs->stringval);
+    if (sym->kind == CONSTSYM && sym->basicdt == INTEGER ) {
       lhs->tokentype  = NUMBERTOK;
-      lhs -> intval = lhs->stringval->constval.intnum;
-    } else if (lhs->stringval->kind == CONSTSYM && lhs->stringval->basicdt == REAL) {
+      lhs -> intval = sym->constval.intnum;
+    } else if (sym->kind == CONSTSYM && sym->basicdt == REAL) {
       lhs->tokentype  = NUMBERTOK;
-      lhs -> realval = lhs->stringval->constval.realnum;
+      lhs -> realval = sym->constval.realnum;
     }
     lhsInt = lhs -> basicdt == INTEGER;
     lhsFloat = lhs->basicdt == REAL;
