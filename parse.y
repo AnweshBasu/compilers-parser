@@ -573,17 +573,34 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     lhsInt = lhs -> basicdt == INTEGER;
     lhsFloat = lhs->basicdt == REAL;
   }
-
-  op -> basicdt = lhsFloat || rhsFloat ? REAL : lhsInt  && rhsInt ? INTEGER : op -> basicdt;
+  if (lhsFloat || rhsFloat){
+    op -> basicdt = REAL;
+  } else if(lhsInt != NULL  && rhsInt != NULL) {
+    op -> basicdt = INTEGER;
+  }
 
 	if ( lhsFloat && rhsInt) {
-    rhs = makefloat(rhs);
+    if (rhs->tokentype == NUMBERTOK) {
+      rhs->basicdt = REAL;
+      rhs->realval = rhs->intval;
+      return rhs; 
+    }
+    TOKEN temp = makeop(FLOATOP);
+    temp->operands = rhs;
+    rhs = temp;
   }
   if (assignCheck && lhsInt && rhsFloat) {
     rhs = makefix(rhs);
   }
   if (!assignCheck &&  lhsInt && rhsFloat ) {
-    lhs  = makefloat(lhs);
+    if (lhs->tokentype == NUMBERTOK) {
+      lhs->basicdt = REAL;
+      lhs->realval = lhs->intval;
+      return lhs; 
+    }
+    TOKEN temp = makeop(FLOATOP);
+    temp->operands = lhs;
+    lhs = temp;
   }
   cons(rhs, NULL);
   cons(lhs, rhs);
@@ -664,16 +681,6 @@ TOKEN makeop(int opnum) {
   return ret;
 }
 
-TOKEN makefloat(TOKEN tok) {
-	if (tok->tokentype == NUMBERTOK) {
-    tok->basicdt = REAL;
-    tok->realval = tok->intval;
-    return tok; 
-    }
-  TOKEN ret = makeop(FLOATOP);
-	ret->operands = tok;
-  return ret;
-}
 
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
