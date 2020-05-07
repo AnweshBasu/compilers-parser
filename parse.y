@@ -493,11 +493,11 @@ TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
     tokb = makeintc(intTok);
     int value = 0;
     if (val->datatype->kind != ARRAYSYM) {
-      value = -data->size
+      value = -data->size;
     } else {
       if (val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM){
         int val = searchst(subs->link->stringval)->constval.intnum + 1;
-        value = -(val)*data->datatype->size
+        value = -(val)*data->datatype->size;
       } else {
         value = tok -> intval;
       }
