@@ -585,9 +585,6 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
       rhs->realval = rhs->intval;
       return rhs; 
     }
-    TOKEN temp = makeop(FLOATOP);
-    temp->operands = rhs;
-    rhs = temp;
   }
   if (assignCheck && lhsInt && rhsFloat) {
     rhs = makefix(rhs);
@@ -598,9 +595,6 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
       lhs->realval = lhs->intval;
       return lhs; 
     }
-    TOKEN temp = makeop(FLOATOP);
-    temp->operands = lhs;
-    lhs = temp;
   }
   cons(rhs, NULL);
   cons(lhs, rhs);
