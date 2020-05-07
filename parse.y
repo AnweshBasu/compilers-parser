@@ -609,22 +609,23 @@ TOKEN makefloat(TOKEN tok) {
     tok->basicdt = REAL;
     tok->realval = tok->intval;
     return tok; 
-    }
-  TOKEN ret = makeop(FLOATOP);
-	ret->operands = tok;
-  return ret;
+  }
+  TOKEN temp = makeop(FLOATOP);
+	temp->operands = tok;
+  return temp;
 }
 
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
-  int idx = labelnumber;
+  int index = labelnumber;
   int labVal = labeltok -> intval;
-  while (idx) {
- 		if (labVal == labelList[idx - 1]) {
- 			TOKEN ret = makegoto(idx - 1);
+  int count = 0;
+  while (count < index) {
+ 		if (labVal == labelList[index - 1]) {
+ 			TOKEN ret = makegoto(index - 1);
  			return ret;
  		}
-    idx--;
+    count++;
   }
 }
 
