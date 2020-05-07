@@ -398,8 +398,14 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
     array = var;
     array->basicdt = initVal;
   } else {
-    TOKEN off_tok = makeintc(offsetVal);
-    array = makearef(var, off_tok, dot);
+    TOKEN off = makeintc(offsetVal);
+    var->link = off;
+    TOKEN val = dot;
+    val = val != NULL ? val : makeop(AREFOP);
+    unaryop(val, var);
+    val->tokentype = OPERATOR;
+    val->whichval = AREFOP;
+    return val;
     array->basicdt = initVal;
     array->whichval = AREFOP;
     array->symtype = record;
