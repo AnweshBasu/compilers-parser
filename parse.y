@@ -272,11 +272,16 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 }
 
 void instvars(TOKEN idlist, TOKEN typetok) {
-  while(idlist) {
-    SYMBOL symbolBool = insertsym(idlist->stringval);
-		symbolBool->kind = VARSYM;
+  Symbol symbol;
+  while(idlist != NULL) {
+    symbolBool = insertsym(idlist->stringval);
     int symbolType = typetok->symtype == NULL;
-    symbolBool->datatype  = symbolType ? searchins(typetok->stringval) : typetok->symtype;	
+    if(symbolType){
+      symbolBool->datatype = searchins(typetok->stringval);
+    } else {
+      symbolBool->datatype = typetok->symtype;
+    }
+		symbolBool->kind = VARSYM;
     SYMBOL val = symbolBool->datatype;	
     symbolBool->basicdt = val->basicdt;
 		symbolBool->size = val->size;
