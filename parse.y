@@ -523,34 +523,34 @@ void symbol_tok(SYMBOL symbolVal, TOKEN tok){
 }
 
 TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
-  int lhs = lhs->basicdt == REAL;
-  int rhsNum =  rhs->basicdt == INTEGER;
-  int lhsNum = lhs -> basicdt == INTEGER;
-  int rhs = rhs ->basicdt == REAL;
+  int lhsFloat = lhs->basicdt == REAL;
+  int rhsInt =  rhs->basicdt == INTEGER;
+  int lhsInt = lhs -> basicdt == INTEGER;
+  int rhsFloat = rhs ->basicdt == REAL;
   int assignCheck = op->whichval == ASSIGNOP;
   if (rhs->whichval == NIL - RESERVED_BIAS && rhs->tokentype == RESERVED) {
 			rhs = makeintc(0);
   }
 	if (rhs->stringval && searchst(rhs->stringval)) {
 		  symbol_tok(searchst(rhs->stringval), rhs);
-      rhsNum =  rhs->basicdt == INTEGER;
-      rhs = rhs ->basicdt == REAL;
+      rhsInt =  rhs->basicdt == INTEGER;
+      rhsFloat = rhs ->basicdt == REAL;
   }
 	if (lhs->stringval && searchst(lhs->stringval)) {
     symbol_tok(searchst(lhs->stringval), lhs);
-      lhsNum = lhs -> basicdt == INTEGER;
-      lhs = lhs->basicdt == REAL;
+      lhsInt = lhs -> basicdt == INTEGER;
+      lhsFloat = lhs->basicdt == REAL;
   }
 
-  op -> basicdt = lhs || rhs ? REAL : lhsNum  && rhsNum ? INTEGER : op -> basicdt;
+  op -> basicdt = lhsFloat || rhsFloat ? REAL : lhsInt  && rhsInt ? INTEGER : op -> basicdt;
 
-	if ( lhs && rhsNum) {
+	if ( lhsFloat && rhsInt) {
     rhs = makefloat(rhs);
   }
-  if (assignCheck && lhsNum && rhs) {
+  if (assignCheck && lhsInt && rhsFloat) {
     rhs = makefix(rhs);
   }
-  if (!assignCheck &&  lhsNum && rhs ) {
+  if (!assignCheck &&  lhsInt && rhsFloat ) {
     lhs  = makefloat(lhs);
   }
   cons(rhs, NULL);
@@ -563,9 +563,9 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
 
 TOKEN dogoto(TOKEN tok, TOKEN labeltok){
   int idx = labelnumber;
-  int label = labeltok -> intval;
+  int labVal = labeltok -> intval;
   while (idx) {
- 		if (label == labels[idx - 1]) {
+ 		if (labVal == labels[idx - 1]) {
  			TOKEN ret = makegoto(idx - 1);
  			return ret;
  		}
@@ -577,22 +577,22 @@ TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr, TOKEN t
   if (!sign) {
     return NULL;
   }
-  TOKEN label = makelabel();
+  TOKEN labelZero = makelabel();
   TOKEN lessThan = makeop(LEOP);
-  TOKEN token =makeop(ASSIGNOP);
-  TOKEN pgm = makeprogn(tokc, statement);
+  TOKEN assignTok =makeop(ASSIGNOP);
+  TOKEN programn = makeprogn(tokc, statement);
   TOKEN begStatement = talloc();
   begStatement->tokentype = IDENTIFIERTOK;
   strcpy(begStatement->stringval, asg->operands->stringval);
   TOKEN if_tok = binop(lessThan, begStatement, endexpr);
-  label->link = makeif(tok, if_tok, pgm, NULL);
-  asg->link = label;
-  statement->link = token;
-  asg->link = label;
-  cons(token, makegoto(label->operands->intval));
+  labelZero->link = makeif(tok, if_tok, programn, NULL);
+  asg->link = labelZero;
+  statement->link = assignTok;
+  asg->link = labelZero;
+  cons(assignTok, makegoto(labelZero->operands->intval));
   TOKEN identificationInit = talloc();
-  unaryop(token, identificationInit);
-  token->operands = identificationInit;
+  unaryop(assignTok, identificationInit);
+  assignTok->operands = identificationInit;
   identificationInit->tokentype = IDENTIFIERTOK;
   identificationInit->link = makeplus(talloc(), makeintc(1), talloc());
   strcpy(identificationInit->stringval, asg->operands->stringval);
