@@ -230,7 +230,7 @@ int labelnumber = 0;  /* sequential counter for internal label numbers */
        printouts in your routines similar to those that are shown here.     */
 
 
-int labelList[20];
+int labelList[40];
 
 
 
