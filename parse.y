@@ -274,22 +274,22 @@ TOKEN makeprogram(TOKEN name, TOKEN args, TOKEN statements) {
 void instvars(TOKEN idlist, TOKEN typetok) {
   Symbol symbol;
   while(idlist != NULL) {
-    symbolBool = insertsym(idlist->stringval);
+    symbol = insertsym(idlist->stringval);
     int symbolType = typetok->symtype == NULL;
     if(symbolType){
-      symbolBool->datatype = searchins(typetok->stringval);
+      symbol->datatype = searchins(typetok->stringval);
     } else {
-      symbolBool->datatype = typetok->symtype;
+      symbol->datatype = typetok->symtype;
     }
-		symbolBool->kind = VARSYM;
-    SYMBOL val = symbolBool->datatype;	
-    symbolBool->basicdt = val->basicdt;
-		symbolBool->size = val->size;
-    blockoffs[symbolBool->blocklevel] +=  (!(symbolBool->size < 16)) ? blockoffs[symbolBool->blocklevel] % 16 : 0;
-		symbolBool->blocklevel = 1;
+		symbol->kind = VARSYM;
+    SYMBOL val = symbol->datatype;	
+    symbol->basicdt = val->basicdt;
+		symbol->size = val->size;
+    blockoffs[symbol->blocklevel] +=  (!(symbol->size < 16)) ? blockoffs[symbol->blocklevel] % 16 : 0;
+		symbol->blocklevel = 1;
     int off =  blockoffs[1];
-		symbolBool->offset = off;
-		blockoffs[1] += symbolBool->size;
+		symbol->offset = off;
+		blockoffs[1] += symbol->size;
     idlist = idlist->link;
   }
 }
