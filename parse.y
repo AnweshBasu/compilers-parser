@@ -580,7 +580,7 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   }
 
 	if ( lhsFloat && rhsInt) {
-    rhs = floatNum(rhs);
+    rhs = makefloat(rhs);
   }
   if (assignCheck && lhsInt && rhsFloat) {
     rhs = makefix(rhs);
@@ -597,7 +597,7 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     rhs = temp;
   }
   if (!assignCheck &&  lhsInt && rhsFloat ) {
-    lhs  = floatNum(lhs);
+    lhs  = makefloat(lhs);
   }
   cons(rhs, NULL);
   cons(lhs, rhs);
@@ -605,7 +605,7 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
   return op;
 }
 
-TOKEN floatNum(TOKEN tok) {
+TOKEN makefloat(TOKEN tok) {
 	if (tok->tokentype == NUMBERTOK) {
     tok->basicdt = REAL;
     tok->realval = tok->intval;
