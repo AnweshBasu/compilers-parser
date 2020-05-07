@@ -473,6 +473,45 @@ TOKEN instrec(TOKEN rectok, TOKEN argstok) {
  	return rectok;
 }
 
+TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {  
+  tok = makeintc(0);
+ 	SYMBOL val = searchst(arr->stringval) -> datatype;
+ 	SYMBOL data = val->datatype->datatype;
+ 	if (subs->tokentype == IDENTIFIERTOKsubs->tokentype == NUMBERTOK) {
+ 		TOKEN sum = makeop(PLUSOP);
+    unaryop(sum, tok); cons(arr, sum);
+    TOKEN final = makeop(AREFOP);
+    unaryop(final, arr);
+    int intTok = 0;
+    if (val->datatype->kind != ARRAYSYM) {
+      intTok = tokb->intval = data->size;
+    } else if(val->kind == ARRAYSYM) {
+      int mult = data->datatype->highbound - data->datatype->lowbound + 1;
+      int val = data->datatype->size * mult ;
+      intTok = tokb->intval = val;
+    }
+    tokb = makeintc(intTok);
+    int tokValues = val->datatype->kind != ARRAYSYM ? -data->size : 
+      val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
+        -(searchst(subs->link->stringval)->constval.intnum + 1)*data->datatype->size : tok -> intval;
+    tok -> intval = tokValues;
+    subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
+    tokb->link = subs;
+    TOKEN multiply = makeop(TIMESOP);
+    unaryop(multiply, tokb);
+    cons(tok, multiply);
+    final->symtype = val;
+    return final;
+ 	} else if (subs->tokentype == NUMBERTOK) {
+    tokb = makeintc(data->size * (subs->intval - 1));
+    tok  = makeop(AREFOP);
+    unaryop(tok, arr);
+    cons(arr, tokb);
+    tok->symtype = val;
+ 	}
+ 	return tok;
+}
+
 void instconst(TOKEN idtok, TOKEN consttok) {
 	  SYMBOL symbolVal = insertsym(idtok->stringval);
   	symbolVal->basicdt = consttok->basicdt;
@@ -489,40 +528,6 @@ void instconst(TOKEN idtok, TOKEN consttok) {
         symbolVal->constval.realnum = consttok->realval;
         break;
     }
-}
-
-TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
-   tok = makeintc(0);
- 	SYMBOL val = searchst(arr->stringval) -> datatype;
- 	SYMBOL data = val->datatype->datatype;
- 	if (subs->tokentype == NUMBERTOK) {
- 		tokb = makeintc(data->size * (subs->intval - 1));
- 		tok  = makeop(AREFOP);
-    unaryop(tok, arr);
-    cons(arr, tokb);
- 		tok->symtype = val;
- 	} else if (subs->tokentype == IDENTIFIERTOK) {
-    TOKEN addition = makeop(PLUSOP);
-    unaryop(addition, tok);
-    cons(arr, addition);
-    TOKEN ret = makeop(AREFOP);
-    unaryop(ret, arr);
-     int intTok = val->datatype->kind != ARRAYSYM ? tokb->intval = data->size
-      : val->kind == ARRAYSYM ?  tokb->intval = data->datatype->size * (data->datatype->highbound - data->datatype->lowbound + 1) : 0;
- 		tokb = makeintc(intTok);
-    int tokValues = val->datatype->kind != ARRAYSYM ? -data->size : 
-      val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
-        -(searchst(subs->link->stringval)->constval.intnum + 1)*data->datatype->size : tok -> intval;
-    tok -> intval = tokValues;
-    subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
-    tokb->link = subs;
- 		TOKEN multiply = makeop(TIMESOP);
-    unaryop(multiply, tokb);
-    cons(tok, multiply);
- 		ret->symtype = val;
- 		return ret;
- 	}
- 	return tok;
 }
 
 void symbol_tok(SYMBOL symbolVal, TOKEN tok){
