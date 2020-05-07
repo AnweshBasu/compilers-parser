@@ -491,10 +491,18 @@ TOKEN arrayref(TOKEN arr, TOKEN tok, TOKEN subs, TOKEN tokb) {
       intTok = tokb->intval = val;
     }
     tokb = makeintc(intTok);
-    int tokValues = val->datatype->kind != ARRAYSYM ? -data->size : 
-      val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM ? 
-        -(searchst(subs->link->stringval)->constval.intnum + 1)*data->datatype->size : tok -> intval;
-    tok -> intval = tokValues;
+    int value = 0;
+    if (val->datatype->kind != ARRAYSYM) {
+      value = -data->size
+    } else {
+      if (val->kind == ARRAYSYM && searchst(subs->link->stringval)->kind == CONSTSYM){
+        int val = searchst(subs->link->stringval)->constval.intnum + 1;
+        value = -(val)*data->datatype->size
+      } else {
+        value = tok -> intval;
+      }
+    }
+    tok -> intval = value;
     subs-> link = val->datatype->kind == ARRAYSYM && val->kind == ARRAYSYM ? NULL : subs-> link;
     tokb->link = subs;
     TOKEN multiply = makeop(TIMESOP);
