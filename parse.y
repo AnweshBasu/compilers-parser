@@ -59,15 +59,15 @@ TOKEN parseresult;
 
 /* Order of tokens corresponds to tokendefs.c; do not change */
 
-%token IDENTIFIER STRING NUMBER
+%token IDENTIFIER STRING NUMBER   /* token types */
 
-%token PLUS MINUS TIMES DIVIDE
+%token PLUS MINUS TIMES DIVIDE    /* Operators */
 %token ASSIGN EQ NE LT LE GE GT POINT DOT AND OR NOT DIV MOD IN
 
-%token COMMA
+%token COMMA                      /* Delimiters */
 %token SEMICOLON COLON LPAREN RPAREN LBRACKET RBRACKET DOTDOT
 
-%token ARRAY BEGINBEGIN
+%token ARRAY BEGINBEGIN           /* Lex uses BEGIN */
 %token CASE CONST DO DOWNTO ELSE END FILEFILE FOR FUNCTION GOTO IF LABEL NIL
 %token OF PACKED PROCEDURE PROGRAM RECORD REPEAT SET THEN TO TYPE UNTIL
 %token VAR WHILE WITH
@@ -82,14 +82,14 @@ program    : PROGRAM IDENTIFIER LPAREN id_list RPAREN SEMICOLON lblock DOT   { p
              | funcall {$$ = $1;}
              |  assign {$$ = $1;}
              |  WHILE expression DO statement             { $$ = makewhile($1, $2, $3, $4); }
-             |  REPEAT statement_list UNTIL expression    { $$ = makerepeat($1, $2, $3, $4); }
+             |  REPEAT statements UNTIL expression    { $$ = makerepeat($1, $2, $3, $4); }
              |  GOTO NUMBER                               { $$ = dogoto($1, $2); }
              | label
              ;
 assign :variable ASSIGN expression   { $$ = binop($2, $1, $3); }
               ;
-statement_list:  statement                           { $$ = $1; }
-              |  statement_list SEMICOLON statement  { $$ = cons($1, $3); }
+statements:  statement                           { $$ = $1; }
+              |  statements SEMICOLON statement  { $$ = cons($1, $3); }
               ;
 
 arg_list   :  fields                       { $$ = $1; }
@@ -773,10 +773,11 @@ int wordaddress(int n, int wordsize)
 void yyerror (char const *s) 
 { fprintf (stderr, "%s\n", s); }
 
-int main(void) { int res;
+int main(void) {             /*  */
+  int res;
   initsyms();
   res = yyparse();
-  printstlevel(1);
+  printstlevel(1);        /* to shorten, change to:  printstlevel(1);  */
   printf("yyparse result = %8d\n", res);
   if (DEBUG) dbugprinttok(parseresult);
   ppexpr(parseresult);      /* Pretty-print the result tree */
