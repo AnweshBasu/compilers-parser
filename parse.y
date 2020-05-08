@@ -143,9 +143,6 @@ cdef         :  IDENTIFIER EQ constant  { instconst($1, $3); }
 addOperator  :  PLUS | MINUS | OR;
              ;
 operator     : TIMES | DIVIDE | DIV | MOD | AND
-term         :  term operator var           { $$ = binop($2, $1, $3); }
-             |  var
-             ;
 id_list      :  IDENTIFIER                  { $$ = $1; }
              |  IDENTIFIER COMMA id_list    { $$ = cons($1, $3); }
              ;
