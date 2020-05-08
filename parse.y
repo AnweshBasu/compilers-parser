@@ -632,26 +632,25 @@ TOKEN dogoto(TOKEN tok, TOKEN labeltok){
 TOKEN makefor(int sign, TOKEN tok, TOKEN asg, TOKEN tokb, TOKEN endexpr, TOKEN tokc, TOKEN statement) {
   if (sign) {
     TOKEN label = makelabel();
-    TOKEN lessThan = makeop(LEOP);
-    TOKEN assignTok =makeop(ASSIGNOP);
+    TOKEN tokenc =makeop(ASSIGNOP);
     TOKEN start = talloc();
-    
+
     start->tokentype = IDENTIFIERTOK;
     strcpy(start->stringval, asg->operands->stringval);
-    TOKEN if_tok = binop(lessThan, start, endexpr);
+    TOKEN if_tok = binop(makeop(LEOP), start, endexpr);
     label->link = makeif(tok, if_tok, makeprogn(tokc, statement), NULL);
     asg->link = label;
-    statement->link = assignTok;
+    statement->link = tokenc;
     asg->link = label;
-    cons(assignTok, makegoto(label->operands->intval));
-    TOKEN identificationInit = talloc();
-    unaryop(assignTok, identificationInit);
-    assignTok->operands = identificationInit;
-    identificationInit->tokentype = IDENTIFIERTOK;
-    identificationInit->link = makeplus(talloc(), makeintc(1), talloc());
-    strcpy(identificationInit->stringval, asg->operands->stringval);
-    identificationInit->link->operands->tokentype = IDENTIFIERTOK;
-    strcpy(identificationInit->link->operands->stringval, asg->operands->stringval);
+    cons(tokenc, makegoto(label->operands->intval));
+    TOKEN init = talloc();
+    unaryop(tokenc, init);
+    tokenc->operands = init;
+    init->tokentype = IDENTIFIERTOK;
+    init->link = makeplus(talloc(), makeintc(1), talloc());
+    strcpy(init->stringval, asg->operands->stringval);
+    init->link->operands->tokentype = IDENTIFIERTOK;
+    strcpy(init->link->operands->stringval, asg->operands->stringval);
     return makeprogn(tokb, asg);
   } else {
     return NULL;
@@ -668,11 +667,11 @@ TOKEN makeplus(TOKEN lhs, TOKEN rhs, TOKEN tok) {
 
 
 TOKEN makeintc(int num) {
-  TOKEN number = talloc();
-  number -> tokentype = NUMBERTOK;
-  number -> intval = num;
-  number -> basicdt = INTEGER;
-  return number;
+  TOKEN intcTok = talloc();
+  intcTok-> tokentype = NUMBERTOK;
+  intcTok -> intval = num;
+  intcTok -> basicdt = INTEGER;
+  return intcTok;
 }
 
 TOKEN makelabel() {
@@ -683,26 +682,27 @@ TOKEN makelabel() {
 }
 
 TOKEN makeop(int opnum) {
-  TOKEN ret = talloc();
-  ret->tokentype = OPERATOR;
-  ret->whichval = opnum;
-  return ret;
+  TOKEN operatorTok = talloc();
+  operatorTok -> tokentype = OPERATOR;
+  operatorTok -> whichval = opnum;
+  return operatorTok; 
 }
 
 
 TOKEN makegoto(int label) {
   TOKEN gotoTok = talloc();
   gotoTok -> whichval = GOTOOP;
-  gotoTok -> operands = makeintc(label);
+  TOKEN intcTok = makeintc(label);
+  gotoTok -> operands = intcTok;
   gotoTok -> tokentype = OPERATOR;
   return gotoTok;
 }
 
 
 TOKEN copytok(TOKEN origtok) {
-  TOKEN ret = talloc();
-  memcpy(ret, origtok, sizeof(TOKEN));
-  return ret;
+  TOKEN temp = talloc();
+  memcpy(temp, origtok, sizeof(TOKEN));
+  return temp;
 }
 
 TOKEN cons(TOKEN item, TOKEN list) {
