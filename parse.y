@@ -100,7 +100,7 @@ lblock       :  LABEL numlist SEMICOLON cblock  { instlabel($2); $$ = $4; }
 cblock       :  CONST cdef_list tblock     { $$ = $3 ;}
              |  tblock
              ;
-funcall      :  IDENTIFIER LPAREN expression_list RPAREN {$$ = makefuncall($2, $1, $3);}
+funcall      :  IDENTIFIER LPAREN expressions RPAREN {$$ = makefuncall($2, $1, $3);}
              ;
 endpart      :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
              |  SEMICOLON END
@@ -110,52 +110,47 @@ endpart      :  SEMICOLON statement endpart    { $$ = cons($2, $3); }
 variable     :  IDENTIFIER                            { $$ = $1; }
              |  variable DOT IDENTIFIER               { $$ = reducedot($1, $2, $3); }
              |  variable POINT                        { $$ = cons($2, $1); }
-             |  variable LBRACKET expression_list RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
+             |  variable LBRACKET expressions RBRACKET  { $$ = arrayref($1, $2, $3, $4); }
              ;
 endif        :  ELSE statement                 { $$ = $2; }
              |  /* empty */                    { $$ = NULL; }
-             ;
-tdef         :  IDENTIFIER EQ type  { insttype($1, $3); }
              ;
 block        :  BEGINBEGIN statement endpart { $$ = cons($2, $3); }
              ;
 
 label        :  NUMBER COLON statement  { $$ = dolabel($1, $2, $3); }
              ;
-expr         : term   { $$ = $1; }
-             | expr plus_op term { $$ = binop($2, $1, $3); }
+sExpr        : term   { $$ = $1; }
+             | sExpr addOperator term { $$ = binop($2, $1, $3); }
              | sign term     { $$ = unaryop($1, $2); }
              ;
-expression   : expression compare_op expr {$$ = binop($2, $1, $3);}
-             | expr  {$$ = $1;}
+expression   : expression compare_op sExpr {$$ = binop($2, $1, $3);}
+             | sExpr  {$$ = $1;}
              ;             
-expression_list  : expression COMMA expression_list  {$$ = cons($1, $3);}
+expressions  : expression COMMA expressions  {$$ = cons($1, $3);}
              | expression  {$$ = cons($1, NULL);}
+             ;
+vdef         :  id_list COLON type          { instvars($1, $3); }
              ;
 vdef_list    :  vdef SEMICOLON              { $$ = $1; }
              |  vdef_list vdef SEMICOLON    { $$ = cons($1, $2); }
-             ;
-plus_op      :  PLUS | MINUS | OR;
-             ;
-vdef         :  id_list COLON type          { instvars($1, $3); }
              ;
 cdef_list    :  cdef SEMICOLON              { $$ = $1; }
              |  cdef_list cdef SEMICOLON
              ;
 cdef         :  IDENTIFIER EQ constant  { instconst($1, $3); }
              ;
-operator     : TIMES | DIVIDE | DIV | MOD | AND
-term         :  term operator factor           { $$ = binop($2, $1, $3); }
-             |  factor
+addOperator  :  PLUS | MINUS | OR;
              ;
-
+operator     : TIMES | DIVIDE | DIV | MOD | AND
+term         :  term operator var           { $$ = binop($2, $1, $3); }
+             |  var
+             ;
 id_list      :  IDENTIFIER                  { $$ = $1; }
              |  IDENTIFIER COMMA id_list    { $$ = cons($1, $3); }
              ;
-
 sign         :  PLUS | MINUS  { $$ = $1; }
-
-tblock       :  TYPE tdef_list vblock  { $$ = $3; }
+tblock       :  TYPE tdefs vblock  { $$ = $3; }
              |  vblock
              ;
 constant     :  IDENTIFIER              { $$ = $1; }
@@ -164,18 +159,23 @@ constant     :  IDENTIFIER              { $$ = $1; }
              |  NUMBER                  { $$ = $1; }
              |  STRING                  { $$ = $1; }
              ;
-
 numlist      :  NUMBER             { $$ = $1; }
              |  numlist COMMA NUMBER  { $$ = cons($1, $3); }
              ;
-
 fields       :  id_list COLON type  { $$ = instfields($1, $3); }
              ;
-simple_type  :  IDENTIFIER                       { $$ = $1; }
+sType        :  IDENTIFIER                       { $$ = $1; }
              |  LPAREN id_list RPAREN            { $$ = instenum($2); }
              |  constant DOTDOT constant { $$ = instdotdot($1, $2, $3); }
              ;
-
+type         : sType  {$$ = $1;}
+             |  ARRAY LBRACKET sList RBRACKET OF type { $$ = instarray($3, $6); }
+             |  RECORD arg_list END                   { $$ = instrec($1, $2); }
+             |  POINT IDENTIFIER                        { $$ = instpoint($1, $2); }
+             ;
+sList        :  sType                { $$ = $1; }
+             |  sType COMMA sList  { $$ = cons($1, $3); }
+             ;
 compare_op   : EQ 
              | LT 
              | GT 
@@ -184,33 +184,26 @@ compare_op   : EQ
              | GE 
              | IN
              ;
+prod         :  TIMES | DIVIDE | DIV | MOD | AND
+             ;
 u_const      :  IDENTIFIER | NUMBER | NIL | STRING
-             ;
- type        : simple_type  {$$ = $1;}
-             |  ARRAY LBRACKET simple_type_list RBRACKET OF type { $$ = instarray($3, $6); }
-             |  RECORD arg_list END                   { $$ = instrec($1, $2); }
-             |  POINT IDENTIFIER                        { $$ = instpoint($1, $2); }
-             ;
-
-simple_type_list :  simple_type                { $$ = $1; }
-             |  simple_type COMMA simple_type_list  { $$ = cons($1, $3); }
              ;
 vblock       :  VAR vdef_list vblock        { $$ = $3; }
              |  block
              ;
-term         :  term prod factor           { $$ = binop($2, $1, $3); }
-             |  factor
+term         :  term prod var           { $$ = binop($2, $1, $3); }
+             |  var
              ;
-tdef_list      :  tdef SEMICOLON          { $$ = $1; }
-             |  tdef_list tdef SEMICOLON
+tdef         :  IDENTIFIER EQ type  { insttype($1, $3); }
              ;
-prod         :  TIMES | DIVIDE | DIV | MOD | AND
+tdefs        :  tdef SEMICOLON          { $$ = $1; }
+             |  tdefs tdef SEMICOLON
              ;
-factor       :         u_const
+var       : u_const
              | variable
              | funcall
              | LPAREN expression RPAREN { $$ = $2; }
-             | NOT factor
+             | NOT var
              ;
 
 %%
@@ -412,9 +405,9 @@ TOKEN reducedot(TOKEN var, TOKEN dot, TOKEN field) {
   return list;
 }
 
-TOKEN makewhile(TOKEN tok, TOKEN expr, TOKEN tokb, TOKEN statement) {
+TOKEN makewhile(TOKEN tok, TOKEN sExpr, TOKEN tokb, TOKEN statement) {
   TOKEN label = makelabel();
-  label->link = makeif(tok, expr, statement, NULL);
+  label->link = makeif(tok, sExpr, statement, NULL);
   TOKEN val = statement->operands;
   while(val->link != NULL){
     val = val->link;
@@ -745,14 +738,14 @@ TOKEN unaryop(TOKEN op, TOKEN lhs) {
 	return op;
 }
 
-TOKEN makerepeat(TOKEN tok, TOKEN statements, TOKEN tokb, TOKEN expr) {
+TOKEN makerepeat(TOKEN tok, TOKEN statements, TOKEN tokb, TOKEN sExpr) {
   TOKEN val = makelabel();
   cons(val, statements);
   while(statements -> link) {
     statements = statements -> link;
   }
   TOKEN temp = makegoto(labelnumber - 1);
-	statements->link = makeif(tokb, expr, makeprogn(talloc(), NULL), temp);
+	statements->link = makeif(tokb, sExpr, makeprogn(talloc(), NULL), temp);
 	return makeprogn(tok, val);
 }
 
