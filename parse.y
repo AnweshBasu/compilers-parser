@@ -776,7 +776,7 @@ void yyerror (char const *s)
 int main(void) { int res;
   initsyms();
   res = yyparse();
-  printst();
+  printstlevel(1);
   printf("yyparse result = %8d\n", res);
   if (DEBUG) dbugprinttok(parseresult);
   ppexpr(parseresult);      /* Pretty-print the result tree */
