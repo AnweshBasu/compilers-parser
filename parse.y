@@ -236,7 +236,7 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
  	int idx = labelnumber;
   tok = makelabel();
  	tok->link = statement;
-  TOKEN temp = talloc();
+  TOKEN sym = talloc();
   labelList[labelnumber] = labeltok->intval;
   int count = 0;
   while (count != idx){
@@ -247,7 +247,7 @@ TOKEN dolabel(TOKEN labeltok, TOKEN tok, TOKEN statement) {
     } 
     count++;
   }
- 	return makeprogn(temp, tok);
+ 	return makeprogn(sym, tok);
 }
 
 TOKEN makearef(TOKEN var, TOKEN off, TOKEN tok) {
@@ -583,17 +583,17 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     rhs = makefloat(rhs);
   }
   if (assignCheck && lhsInt && rhsFloat) {
-    TOKEN temp;
+    TOKEN sym;
     if (rhs -> tokentype == NUMBER) {
       rhs -> intval = rhs -> realval;
       rhs->basicdt = INTEGER;
-      temp = rhs;
+      sym = rhs;
     } else {
       TOKEN correct = makeop(FIXOP);
       unaryop(correct, rhs);
-      temp = correct;
+      sym = correct;
     }
-    rhs = temp;
+    rhs = sym;
   }
   if (!assignCheck &&  lhsInt && rhsFloat ) {
     lhs  = makefloat(lhs);
@@ -610,9 +610,9 @@ TOKEN makefloat(TOKEN tok) {
     tok->realval = tok->intval;
     return tok; 
   }
-  TOKEN temp = makeop(FLOATOP);
-	temp->operands = tok;
-  return temp;
+  TOKEN sym = makeop(FLOATOP);
+	sym->operands = tok;
+  return sym;
 }
 
 
@@ -700,9 +700,9 @@ TOKEN makegoto(int label) {
 
 
 TOKEN copytok(TOKEN origtok) {
-  TOKEN temp = talloc();
-  memcpy(temp, origtok, sizeof(TOKEN));
-  return temp;
+  TOKEN sym = talloc();
+  memcpy(sym, origtok, sizeof(TOKEN));
+  return sym;
 }
 
 TOKEN cons(TOKEN item, TOKEN list) {
@@ -722,35 +722,31 @@ TOKEN makeif(TOKEN tok, TOKEN exp, TOKEN thenpart, TOKEN elsepart) {
   return tok;
 }
 
-TOKEN makeprogn(TOKEN tok, TOKEN statements) {
+TOKEN makeprogn(TOKEN tok, TOKEN statements) 
+{ tok->tokentype = OPERATOR;
   tok->whichval = PROGNOP;
-  tok->tokentype = OPERATOR;
   tok->operands = statements;
   return tok;
 }
 
 
 TOKEN makefuncall(TOKEN tok, TOKEN fn, TOKEN args) {
-  TOKEN tokFunc = makeop(FUNCALLOP);
-  tokFunc -> operands = fn;
-  tokFunc -> operands -> link = args;
+  TOKEN funcallTok = makeop(FUNCALLOP);
+  funcallTok -> operands = fn;
+  funcallTok -> operands -> link = args;
   tok = makeop(ASSIGNOP);
-
 	if (strcmp(fn->stringval, "new")) {
-    SYMBOL funStr = searchins(fn->stringval);
     cons (fn, args);
-    tokFunc->basicdt = funStr->datatype->basicdt;
-    tokFunc->operands = fn;
-    return tokFunc;
+    funcallTok->basicdt = searchins(fn->stringval)->datatype->basicdt;
+    funcallTok->operands = fn;
+    return funcallTok;
 	} 
-  SYMBOL argVal = searchst(args->stringval);
-  SYMBOL temp = argVal;
+  SYMBOL sym = searchst(args->stringval);
   for (int currentData = 0; currentData < 3; currentData++) {
-    temp = temp -> datatype;
+    sym = sym -> datatype;
   }
-  TOKEN length = makeintc( temp->size);
-  fn->link = length;
-  return binop(tok, args, tokFunc);
+  fn->link = makeintc( sym->size);
+  return binop(tok, args, funcallTok);
 }
 
 TOKEN unaryop(TOKEN op, TOKEN lhs) {
@@ -759,14 +755,14 @@ TOKEN unaryop(TOKEN op, TOKEN lhs) {
 }
 
 TOKEN makerepeat(TOKEN tok, TOKEN statements, TOKEN tokb, TOKEN expr) {
-  TOKEN thenVal = talloc();
-  TOKEN labelVal = makelabel();
-  cons(labelVal, statements);
+  TOKEN val = makelabel();
+  cons(val, statements);
   while(statements -> link) {
     statements = statements -> link;
   }
-	statements->link = makeif(tokb, expr, makeprogn(thenVal, NULL), makegoto(labelnumber - 1));
-	return makeprogn(tok, labelVal);
+  TOKEN temp = makegoto(labelnumber - 1);
+	statements->link = makeif(tokb, expr, makeprogn(talloc(), NULL), temp);
+	return makeprogn(tok, val);
 }
 
 
