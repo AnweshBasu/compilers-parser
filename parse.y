@@ -191,9 +191,6 @@ u_const      :  IDENTIFIER | NUMBER | NIL | STRING
 vblock       :  VAR vdef_list vblock        { $$ = $3; }
              |  block
              ;
-term         :  term prod var           { $$ = binop($2, $1, $3); }
-             |  var
-             ;
 tdef         :  IDENTIFIER EQ type  { insttype($1, $3); }
              ;
 tdefs        :  tdef SEMICOLON          { $$ = $1; }
