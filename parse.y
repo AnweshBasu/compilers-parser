@@ -588,7 +588,17 @@ TOKEN binop(TOKEN op, TOKEN lhs, TOKEN rhs) {
     rhs = makefloat(rhs);
   }
   if (op->whichval == ASSIGNOP && leftInt && rightR) {
-    rhs = makefix(rhs);
+    TOKEN sym;
+    if (rhs -> tokentype == NUMBER) {
+      rhs -> intval = rhs -> realval;
+      rhs->basicdt = INTEGER;
+      sym = rhs;
+    } else {
+      TOKEN correct = makeop(FIXOP);
+      unaryop(correct, rhs);
+      sym = correct;
+    }
+    rhs = sym;
   } else if (!op->whichval == ASSIGNOP &&  leftInt && rightR) {
     lhs  = makefloat(lhs);
   }
