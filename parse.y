@@ -520,7 +520,7 @@ void instconst(TOKEN idtok, TOKEN consttok) {
 	symbolVal->basicdt = consttok->basicdt;
   symbolVal->kind = CONSTSYM;
   int type = consttok->basicdt;
-  if type == INTEGER {
+  if (type == INTEGER) {
     symbolVal->constval.intnum = consttok->intval;
   } else if (type == STRINGTYPE) {
     strncpy(symbolVal->constval.stringconst, consttok->stringval, 16);
