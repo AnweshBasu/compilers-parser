@@ -545,8 +545,8 @@
     int rhsInt =  rhs-> basicdt == INTEGER;
     int lhsInt = lhs -> basicdt == INTEGER;
     int rhsFloat = rhs -> basicdt == REAL;
-    SYMBOL lsym;
-    SYMBOL rsym;
+    SYMBOL lsym = NULL;
+    SYMBOL rsym = NULL;
     if (rhs->whichval == NIL - RESERVED_BIAS && rhs->tokentype == RESERVED) {
         rhs = makeintc(0);
         rhs->symtype = makesym("nil");
