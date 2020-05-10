@@ -580,9 +580,9 @@
         lhsFloat = lhs->basicdt == REAL;
     }
     if (lhsFloat || rhsFloat) {
-      op -> basicdt = REAL
+      op -> basicdt = REAL;
     } else if (lhsInt && rhsInt) {
-      op -> basicdt = Integer
+      op -> basicdt = INTEGER;
     } 
     if ( lhsFloat && rhsInt) {
       rhs = makefloat(rhs);
